@@ -1,0 +1,70 @@
+{
+  "_comment": "PZ Mask Studio worker — zkopíruj na config.json a uprav.",
+  "api_base": "http://localhost:8080/api/index.php?action=",
+  "worker_token": "CHANGE-ME-worker-secret-7f3a9c",
+  "worker_id": "local-auto",
+  "poll_interval_sec": 4,
+  "device": "auto",
+  "models_dir": "./checkpoints",
+  "sam2_cfg": {
+    "hiera_large": {
+      "ckpt": "sam2.1_hiera_large.pt",
+      "cfg": "configs/sam2.1/sam2.1_hiera_l.yaml"
+    },
+    "hiera_base_plus": {
+      "ckpt": "sam2.1_hiera_base_plus.pt",
+      "cfg": "configs/sam2.1/sam2.1_hiera_b+.yaml"
+    },
+    "hiera_small": {
+      "ckpt": "sam2.1_hiera_small.pt",
+      "cfg": "configs/sam2.1/sam2.1_hiera_s.yaml"
+    },
+    "hiera_tiny": {
+      "ckpt": "sam2.1_hiera_tiny.pt",
+      "cfg": "configs/sam2.1/sam2.1_hiera_t.yaml"
+    }
+  },
+  "matanyone": {
+    "enabled": true,
+    "version": "v2",
+    "_comment_version": "v2 = MatAnyone 2 (CVPR 2026, nejlepší okraje). Když se nenačte, padá na v1, pak na feather.",
+    "hf_id": "PeiqingYang/MatAnyone2",
+    "repo_dir_v2": "./MatAnyone2",
+    "ckpt_v2": "./checkpoints/matanyone2.pth",
+    "repo_dir": "./MatAnyone",
+    "ckpt": "./checkpoints/matanyone.pth",
+    "max_size": null,
+    "max_long_edge": 1920,
+    "_comment_maxsize": "max_size omezí delší hranu vstupu pro MatAnyone 2 (null = bez limitu). max_long_edge platí jen pro v1 fallback."
+  },
+  "vram": {
+    "sequential_models": true,
+    "empty_cache_between_phases": true,
+    "frame_ram_cache": 150,
+    "downscale_4k_for_sam": true,
+    "sam_max_long_edge": 2048
+  },
+  "ffmpeg": "ffmpeg",
+  "jpeg_quality": 90,
+  "full_frame_format": "png",
+  "_comment_full_frame_format": "jpg q100 = rychlé a vizuálně bezztrátové; SAM2 čte JPG přímo (žádný transcode). png = striktně bezztrátový vstup mattingu, ale pomalejší.",
+  "full_jpeg_quality": 100,
+  "preview_max_long_edge": 720,
+  "preview_jpeg_quality": 74,
+  "auto_download_sam2": true,
+  "sam2_download_base": "https://dl.fbaipublicfiles.com/segment_anything_2/092824",
+  "sam_output_mode": "h264_luma",
+  "h264_luma_crf": 10,
+  "luma_soft_edges": true,
+  "luma_binary_threshold": 16,
+  "sam2_config_raw_base": "https://raw.githubusercontent.com/facebookresearch/sam2/main/sam2/configs/sam2.1",
+  "h264_luma_preset": "slow",
+  "h264_luma_profile": "high",
+  "h264_luma_level": "4.2",
+  "_comment_quality_fix_v9": "Finální H.264 luma export bere full-res masky z PNG/full frames. Preview JPG se nesmí použít pro finální výstup.",
+  "_comment_luma_soft_edges": "true = zachová měkký matte (vlasy) z MatAnyone (kvalitnější track matte). false = tvrdá binární maska.",
+  "luma_binary_feather": 0.0,
+  "preview_full_quality": true,
+  "_comment_preview_full_quality": "true = editor dostane plné framy v plné kvalitě (q100). false = zmenšené náhledy (rychlejší upload).",
+  "editor_jpeg_quality": 100
+}
