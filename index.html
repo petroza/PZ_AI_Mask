@@ -1,0 +1,14 @@
+@echo off
+REM ====================================================================
+REM  PZ MASK v64 STABLE - worker only
+REM  Use only when frontend/server is already running.
+REM ====================================================================
+setlocal EnableExtensions DisableDelayedExpansion
+cd /d "%~dp0"
+echo.
+echo ============================================================
+echo   PZ MASK worker only
+echo   WARNING: frontend must already run at http://127.0.0.1:8080
+echo ============================================================
+echo.
+call "%~dp0run_worker.bat"

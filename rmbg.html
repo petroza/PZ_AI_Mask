@@ -1,0 +1,25 @@
+@echo off
+REM ====================================================================
+REM  Optional: save Hugging Face token for gated briaai/RMBG-2.0
+REM  Run this only if you want to use RMBG-2.0 in the UI.
+REM ====================================================================
+setlocal EnableExtensions DisableDelayedExpansion
+cd /d "%~dp0.."
+if not exist "worker" mkdir "worker" >nul 2>nul
+
+echo.
+echo  RMBG-2.0 is a gated Hugging Face model.
+echo  First make sure your account has access to briaai/RMBG-2.0.
+echo  Then paste a Hugging Face token with read permission.
+echo.
+set /p HFTOKEN="HF token: "
+if "%HFTOKEN%"=="" (
+  echo Empty token, nothing saved.
+  pause
+  exit /b 1
+)
+>"worker\hf_token.txt" echo %HFTOKEN%
+echo.
+echo [OK] Token saved to worker\hf_token.txt
+echo Restart START.bat / worker before using RMBG-2.0.
+pause

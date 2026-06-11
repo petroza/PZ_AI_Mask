@@ -1,0 +1,93 @@
+@echo off
+setlocal EnableExtensions
+cd /d "%~dp0.."
+title RMBG Luma Studio - FFmpeg installer CMD only
+
+echo Installing/checking portable FFmpeg without PowerShell...
+
+set "ROOT=%cd%"
+set "FFDIR=%ROOT%\runtime\ffmpeg"
+set "FFEXE=%FFDIR%\bin\ffmpeg.exe"
+set "PYEXE=%ROOT%\.venv\Scripts\python.exe"
+
+if exist "%FFEXE%" (
+  echo FFmpeg already installed: %FFEXE%
+  exit /b 0
+)
+
+if not exist "%PYEXE%" (
+  echo ERROR: Python venv not found: %PYEXE%
+  echo Nejd??v mus? prob?hnout vytvo?en? .venv v install.bat.
+  exit /b 1
+)
+
+if not exist "%FFDIR%" mkdir "%FFDIR%" >nul 2>nul
+if not exist "%ROOT%\logs" mkdir "%ROOT%\logs" >nul 2>nul
+
+"%PYEXE%" -c "exec(r'''import os, sys, shutil, zipfile, urllib.request, pathlib, time
+root = pathlib.Path(os.environ.get('ROOT', os.getcwd()))
+ffdir = root / 'runtime' / 'ffmpeg'
+bindir = ffdir / 'bin'
+ffexe = bindir / 'ffmpeg.exe'
+url = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+zip_path = ffdir / 'ffmpeg-release-essentials.zip'
+tmp = ffdir / '_extract'
+ffdir.mkdir(parents=True, exist_ok=True)
+bindir.mkdir(parents=True, exist_ok=True)
+if ffexe.exists():
+    print('FFmpeg already installed:', ffexe)
+    sys.exit(0)
+print('Downloading FFmpeg:', url)
+try:
+    with urllib.request.urlopen(url, timeout=120) as r, open(zip_path, 'wb') as f:
+        total = int(r.headers.get('Content-Length') or 0)
+        done = 0
+        last = time.time()
+        while True:
+            chunk = r.read(1024 * 1024)
+            if not chunk:
+                break
+            f.write(chunk)
+            done += len(chunk)
+            now = time.time()
+            if now - last > 1.0:
+                if total:
+                    print(f'  {done/1024/1024:.1f} / {total/1024/1024:.1f} MB')
+                else:
+                    print(f'  {done/1024/1024:.1f} MB')
+                last = now
+except Exception as e:
+    print('ERROR: FFmpeg download failed:', repr(e))
+    print('Tip: st?hni ru?n? ffmpeg-release-essentials.zip z gyan.dev a dej ffmpeg.exe do runtime\\ffmpeg\\bin\\')
+    sys.exit(2)
+print('Extracting FFmpeg...')
+try:
+    if tmp.exists():
+        shutil.rmtree(tmp)
+    tmp.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path, 'r') as z:
+        z.extractall(tmp)
+    found_ffmpeg = next(tmp.rglob('ffmpeg.exe'), None)
+    found_ffprobe = next(tmp.rglob('ffprobe.exe'), None)
+    if not found_ffmpeg:
+        raise RuntimeError('ffmpeg.exe not found in downloaded archive')
+    shutil.copy2(found_ffmpeg, ffexe)
+    if found_ffprobe:
+        shutil.copy2(found_ffprobe, bindir / 'ffprobe.exe')
+finally:
+    if tmp.exists():
+        shutil.rmtree(tmp, ignore_errors=True)
+if not ffexe.exists():
+    print('ERROR: FFmpeg install failed, file missing:', ffexe)
+    sys.exit(3)
+print('FFmpeg installed:', ffexe)
+''')" 1>"%ROOT%\logs\install_ffmpeg_cmd.log" 2>&1
+set "ERR=%ERRORLEVEL%"
+type "%ROOT%\logs\install_ffmpeg_cmd.log"
+if not "%ERR%"=="0" (
+  echo.
+  echo FFmpeg install failed. Log: logs\install_ffmpeg_cmd.log
+  exit /b %ERR%
+)
+
+exit /b 0

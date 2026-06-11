@@ -1,0 +1,78 @@
+@echo off
+REM ====================================================================
+REM  PZ MASK v64 STABLE - diagnostics bundle
+REM ====================================================================
+setlocal EnableExtensions DisableDelayedExpansion
+cd /d "%~dp0.."
+
+set "HERE=%CD%"
+set "OUT=%HERE%\diagnostics"
+set "STAMP=%DATE:/=-%_%TIME::=-%"
+set "STAMP=%STAMP: =0%"
+set "DIR=%OUT%\diag_%STAMP%"
+set "ZIP=%OUT%\PZ_MASK_DIAG_%STAMP%.zip"
+
+if not exist "%OUT%" mkdir "%OUT%" >nul 2>nul
+mkdir "%DIR%" >nul 2>nul
+
+echo Creating diagnostics in:
+echo   %DIR%
+echo.
+
+> "%DIR%\00_paths.txt" echo HERE=%HERE%
+>>"%DIR%\00_paths.txt" echo DATE=%DATE% TIME=%TIME%
+>>"%DIR%\00_paths.txt" echo USER=%USERNAME%
+>>"%DIR%\00_paths.txt" echo COMPUTER=%COMPUTERNAME%
+
+echo Checking port 8080...
+netstat -ano | findstr ":8080 " > "%DIR%\port_8080.txt" 2>&1
+
+echo Testing API...
+curl.exe -v "http://127.0.0.1:8080/api/index.php?action=" > "%DIR%\api_test.txt" 2>&1
+
+echo Processes...
+tasklist > "%DIR%\tasklist.txt" 2>&1
+wmic process get ProcessId,Name,CommandLine > "%DIR%\processes.txt" 2>&1
+
+echo CUDA/Python...
+if exist "%HERE%\runtime\miniconda\envs\maskstudio\python.exe" (
+  "%HERE%\runtime\miniconda\envs\maskstudio\python.exe" "%HERE%\worker\device_check.py" > "%DIR%\cuda_check.txt" 2>&1
+  "%HERE%\runtime\miniconda\envs\maskstudio\python.exe" -V > "%DIR%\python_version.txt" 2>&1
+) else (
+  echo Python runtime not found > "%DIR%\cuda_check.txt"
+)
+
+echo NVIDIA...
+nvidia-smi > "%DIR%\nvidia_smi.txt" 2>&1
+
+echo PHP...
+if exist "%HERE%\runtime\php\php.exe" (
+  "%HERE%\runtime\php\php.exe" -v > "%DIR%\php_version.txt" 2>&1
+  "%HERE%\runtime\php\php.exe" -l "%HERE%\api\index.php" > "%DIR%\php_lint_api.txt" 2>&1
+) else (
+  echo PHP runtime not found > "%DIR%\php_version.txt"
+)
+
+echo Copying small config/status files...
+if exist "%HERE%\APP_VERSION.txt" copy /y "%HERE%\APP_VERSION.txt" "%DIR%\" >nul
+if exist "%HERE%\worker\config.json" copy /y "%HERE%\worker\config.json" "%DIR%\worker_config.json" >nul
+if exist "%HERE%\storage\worker_status.json" copy /y "%HERE%\storage\worker_status.json" "%DIR%\" >nul
+if exist "%HERE%\storage\last_update.json" copy /y "%HERE%\storage\last_update.json" "%DIR%\" >nul
+
+echo Folder listing...
+dir "%HERE%" > "%DIR%\root_dir.txt" 2>&1
+dir "%HERE%\runtime" > "%DIR%\runtime_dir.txt" 2>&1
+dir "%HERE%\worker" > "%DIR%\worker_dir.txt" 2>&1
+dir "%HERE%\api" > "%DIR%\api_dir.txt" 2>&1
+
+echo Creating ZIP...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path '%DIR%\*' -DestinationPath '%ZIP%' -Force" > "%DIR%\zip_log.txt" 2>&1
+
+echo.
+echo ============================================================
+echo Diagnostics created:
+echo   %ZIP%
+echo ============================================================
+echo.
+pause
+exit /b 0

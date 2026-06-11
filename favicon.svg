@@ -1,0 +1,54 @@
+@echo off
+REM ====================================================================
+REM  Mask Studio - GPU worker
+REM  Survives paths with spaces and parentheses.
+REM ====================================================================
+setlocal EnableExtensions DisableDelayedExpansion
+cd /d "%~dp0.."
+
+set "HERE=%CD%"
+
+set "PYEXE=%HERE%\runtime\miniconda\envs\maskstudio\python.exe"
+if exist "%HERE%\worker\python_path.txt" set /p PYEXE=<"%HERE%\worker\python_path.txt"
+
+if not exist "%PYEXE%" goto noenv
+if not exist "%HERE%\worker\config.json" goto nocfg
+
+set "PYTHONUTF8=1"
+set "HF_HOME=%HERE%\runtime\hf_cache"
+if exist "%HERE%\worker\hf_token.txt" (
+  set /p HF_TOKEN=<"%HERE%\worker\hf_token.txt"
+  set "HUGGINGFACE_HUB_TOKEN=%HF_TOKEN%"
+  echo  [OK] Hugging Face token loaded from worker\hf_token.txt
+)
+
+echo  Checking PyTorch/CUDA...
+"%PYEXE%" "%HERE%\worker\device_check.py"
+if errorlevel 1 (
+  echo.
+  echo  [!] CUDA is not ready. For RTX fix it with: REPAIR_CUDA_TORCH.bat
+  echo      Worker will temporarily use CPU fallback instead of crashing.
+  echo.
+)
+
+echo  Starting worker (Ctrl+C to stop)...
+echo.
+REM IMPORTANT: do NOT run from .\worker because .\worker\sam2 may shadow
+REM the installed SAM2 package and SAM2 then refuses to start.
+cd /d "%HERE%"
+if not exist "%HERE%\runtime\_run" mkdir "%HERE%\runtime\_run" >nul 2>nul
+"%PYEXE%" "%HERE%\worker\run.py" --config "%HERE%\worker\config.json"
+echo.
+echo  Worker stopped.
+pause
+goto :eof
+
+:noenv
+echo  [ERROR] Environment not installed. Run INSTALL.bat first.
+pause
+goto :eof
+
+:nocfg
+echo  [ERROR] Missing worker\config.json. Run INSTALL.bat first.
+pause
+goto :eof

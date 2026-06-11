@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PZ MASK — Update</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070a0d;--panel:#0e1419;--panel2:#121b22;--line:#20303a;--ink:#e9f1f7;--dim:#81909d;--acc:#2fe39a;--acc2:#28b6ff;--warn:#ffb454;--err:#ff5d5d}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(1000px 520px at 80% -10%,#142834 0%,transparent 58%),var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif}.wrap{max-width:980px;margin:0 auto;padding:34px 22px 70px}header{display:flex;align-items:center;gap:14px;margin-bottom:22px}.logo{width:42px;height:42px;border-radius:11px}h1{font-size:24px;margin:0;letter-spacing:-.4px}.sub{font:12px 'JetBrains Mono',monospace;color:var(--dim);margin-top:3px}.toplink{margin-left:auto;color:#cfe8f6;border:1px solid var(--line);background:#0a1015;border-radius:9px;padding:9px 12px;text-decoration:none;font:11px 'JetBrains Mono',monospace}.toplink:hover{border-color:#36515f;color:#fff}.card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.28);margin-bottom:16px}h2{margin:0 0 12px;font-size:18px}.drop{border:1px dashed #31505c;background:#091015;border-radius:14px;min-height:170px;display:grid;place-items:center;text-align:center;padding:24px;cursor:pointer;transition:.15s}.drop.over,.drop:hover{border-color:var(--acc);background:#0b1717}.drop b{font-size:18px}.drop span{display:block;color:var(--dim);font:12px 'JetBrains Mono',monospace;margin-top:8px}.btn{width:100%;border:0;border-radius:12px;background:linear-gradient(135deg,var(--acc),#20c98d);color:#04100c;font-weight:800;padding:15px 18px;cursor:pointer;margin-top:16px;box-shadow:0 15px 35px rgba(47,227,154,.18)}.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mono{font-family:'JetBrains Mono',monospace}.status{background:#071016;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow:auto;max-height:360px}.ok{color:var(--acc)}.err{color:var(--err)}.warn{color:var(--warn)}.small{font-size:12px;color:var(--dim);line-height:1.6}.pill{display:inline-flex;border:1px solid #1f5a3a;background:#0a2417;color:var(--acc);border-radius:99px;padding:4px 9px;font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.6px}.progress{height:7px;background:#0b1218;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin-top:12px;display:none}.progress i{display:block;height:100%;width:0;background:var(--acc)}@media(max-width:760px){.row{grid-template-columns:1fr}.toplink{margin-left:0}header{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="favicon.svg" alt="PZ MASK">
+    <div><h1>PZ MASK Update</h1><div class="sub">nahraje malý ZIP · zachová runtime, modely, jobs, tokeny</div></div>
+    <a class="toplink" href="index.html">← Jobs</a>
+  </header>
+
+  <div class="row">
+    <div class="card">
+      <h2>Install Update ZIP</h2>
+      <div class="drop" id="drop"><div><b>Drop update ZIP here</b><span id="fname">nebo klikni a vyber soubor</span></div><input id="file" type="file" accept=".zip" hidden></div>
+      <div class="progress" id="prog"><i></i></div>
+      <button class="btn" id="install" disabled>Install Update</button>
+      <p class="small">Update přepíše jen soubory aplikace. Automaticky přeskočí <b>runtime</b>, stažené modely, databázi, uploady, výsledky, worker tokeny a lokální <span class="mono">worker/config.json</span>.</p>
+    </div>
+    <div class="card">
+      <h2>Current App</h2>
+      <div id="appinfo" class="status mono">loading…</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Update log</h2>
+    <div id="log" class="status mono">waiting for update ZIP…</div>
+  </div>
+</div>
+<script>
+const API='api/index.php?action=';
+const $=s=>document.querySelector(s);
+let chosen=null;
+function log(msg, cls=''){const el=$('#log');el.innerHTML=(cls?`<span class="${cls}">`:'')+msg+(cls?'</span>':'');}
+function esc(s){return(s+'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+async function status(){try{const d=await(await fetch(API+'app/status')).json();$('#appinfo').innerHTML=`<span class="pill">${esc(d.version||'unknown')}</span>\n\nApp root:\n${esc(d.app_root||'')}\n\nBackups:\n${esc(d.backups_dir||'')}\n\nLast update:\n${d.last_update?esc(JSON.stringify(d.last_update,null,2)):'none'}`;}catch(e){$('#appinfo').innerHTML='<span class="err">API unavailable: '+esc(e.message||e)+'</span>';}}
+status();
+const drop=$('#drop'), file=$('#file');
+drop.onclick=()=>file.click();
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)setFile(f)});
+file.onchange=()=>{if(file.files[0])setFile(file.files[0])};
+function setFile(f){chosen=f;$('#fname').textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB';$('#install').disabled=false;log('ready: '+f.name)}
+$('#install').onclick=async()=>{if(!chosen)return;if(!confirm('Instalovat update? Aplikace vytvoří backup a zachová runtime/modely.'))return;$('#install').disabled=true;const fd=new FormData();fd.append('update_zip',chosen,chosen.name);const bar=$('#prog');bar.style.display='block';bar.querySelector('i').style.width='0%';log('uploading update…','warn');try{const d=await new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST',API+'update/install');xhr.upload.onprogress=e=>{if(e.lengthComputable)bar.querySelector('i').style.width=(e.loaded/e.total*100)+'%'};xhr.onload=()=>{try{const j=JSON.parse(xhr.responseText);if(xhr.status>=200&&xhr.status<300&&j.ok)resolve(j);else reject(new Error(j.error||xhr.responseText||('HTTP '+xhr.status)))}catch(_){reject(new Error(xhr.responseText||'invalid response'))}};xhr.onerror=()=>reject(new Error('network error'));xhr.send(fd)});log('DONE\n\n'+esc(JSON.stringify(d,null,2))+'\n\nWorker restart byl vyžádán. Když běží starší worker, zavři/otevři START.bat ručně. U dalších verzí už se restartne sám.','ok');status();}catch(e){log('ERROR\n'+esc(e.message||e),'err');$('#install').disabled=false;}};
+</script>
+</body>
+</html>

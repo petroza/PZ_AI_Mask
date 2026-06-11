@@ -1,8 +1,8 @@
 @echo off
 REM ====================================================================
-REM  Mask Studio v28 - GUI Windows folder picker installer
+REM  PZ MASK v67 - GUI Windows folder picker installer
 REM  English version. Pure CMD + temporary VBS dialog. No PowerShell.
-REM  Final target folder keeps START.bat and UNINSTALL.bat.
+REM  Final target folder keeps stable launchers; main start is START.bat.
 REM ====================================================================
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
@@ -12,25 +12,25 @@ if "%SRC:~-1%"=="\" set "SRC=%SRC:~0,-1%"
 
 echo.
 echo  ============================================================
-echo    PZ MASK v72 - installation with Windows folder picker
+echo    Mask Studio - installation with Windows folder picker
 echo  ============================================================
 echo.
 echo  In the next Windows dialog, browse to the folder where Mask Studio
 echo  should be installed. You can also create a new folder there.
 echo.
-echo  The final selected folder will contain only these BAT files:
+echo  Main start file after install:
 echo    START.bat
-echo    UNINSTALL.bat
+echo  Repair/diagnostic tools live in the nastroje\ subfolder.
 echo.
 
-if not exist "%SRC%\INSTALL_NO_POWERSHELL.bat" (
+if not exist "%SRC%\nastroje\INSTALL_NO_POWERSHELL.bat" (
   echo [ERROR] Payload missing: %SRC%
   echo Extract the whole ZIP first, then run this installer again.
   pause
   exit /b 1
 )
 
-set "DEFAULT_TARGET=%USERPROFILE%\PZ_MASK"
+set "DEFAULT_TARGET=%USERPROFILE%\MaskStudio_Portable"
 
 echo  Opening Windows folder selection window...
 echo.
@@ -43,7 +43,7 @@ set "OUTTXT=%TEMP%\maskstudio_selected_folder_%RANDOM%%RANDOM%.txt"
 >>"%PICKER%" echo Set sh = CreateObject("Shell.Application")
 >>"%PICKER%" echo Set fso = CreateObject("Scripting.FileSystemObject")
 >>"%PICKER%" echo outFile = WScript.Arguments(0)
->>"%PICKER%" echo Set f = sh.BrowseForFolder(0, "Select the target folder for PZ MASK installation", ^&H0051, 17)
+>>"%PICKER%" echo Set f = sh.BrowseForFolder(0, "Select the target folder for Mask Studio installation", ^&H0051, 17)
 >>"%PICKER%" echo If Not f Is Nothing Then
 >>"%PICKER%" echo   fso.CreateTextFile(outFile, True).Write f.Self.Path
 >>"%PICKER%" echo End If
@@ -110,10 +110,10 @@ if %RC% GEQ 8 (
 
 echo.
 echo  [2/4] Installing/downloading runtime into target folder...
-echo        This uses INSTALL_NO_POWERSHELL.bat from the copied app.
+echo        This uses nastroje\INSTALL_NO_POWERSHELL.bat from the copied app.
 echo.
 pushd "%TARGET%"
-call "%TARGET%\INSTALL_NO_POWERSHELL.bat"
+call "%TARGET%\nastroje\INSTALL_NO_POWERSHELL.bat"
 set "INSTALL_RC=%ERRORLEVEL%"
 popd
 if not "%INSTALL_RC%"=="0" (
@@ -128,9 +128,10 @@ echo.
 echo  [3/4] Cleaning target folder...
 REM keep only stable launcher BAT files in the target root
 for %%B in ("%TARGET%\*.bat") do (
-  if /I not "%%~nxB"=="START.bat" if /I not "%%~nxB"=="START_PZ_MASK.bat" if /I not "%%~nxB"=="STOP_PZ_MASK.bat" if /I not "%%~nxB"=="DIAGNOSE_PZ_MASK.bat" if /I not "%%~nxB"=="RUN_WORKER_ONLY.bat" if /I not "%%~nxB"=="UNINSTALL.bat" del /q "%%~fB" >nul 2>nul
+  if /I not "%%~nxB"=="START.bat" if /I not "%%~nxB"=="STOP_PZ_MASK.bat" if /I not "%%~nxB"=="UNINSTALL.bat" del /q "%%~fB" >nul 2>nul
 )
 if exist "%TARGET%\installer.ps1" del /q "%TARGET%\installer.ps1" >nul 2>nul
+for %%R in ("%TARGET%\README*.txt" "%TARGET%\README*.md" "%TARGET%\README.md") do if exist "%%~fR" del /q "%%~fR" >nul 2>nul
 
 echo.
 echo  [4/4] Done.

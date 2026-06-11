@@ -1,0 +1,31 @@
+@echo off
+REM ====================================================================
+REM  PZ MASK v64 STABLE - stop local frontend/worker
+REM ====================================================================
+setlocal EnableExtensions DisableDelayedExpansion
+cd /d "%~dp0"
+echo.
+echo ============================================================
+echo   Stopping PZ MASK local processes
+echo ============================================================
+echo.
+
+echo [1/3] Trying to stop PHP frontend on port 8080...
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8080 " ^| findstr "LISTENING"') do (
+  echo Killing PID %%P on port 8080
+  taskkill /PID %%P /F >nul 2>nul
+)
+
+echo [2/3] Trying to stop worker Python processes started from this folder...
+wmic process where "name='python.exe' or name='pythonw.exe'" get ProcessId,CommandLine 2>nul | findstr /I /C:"PZ Mask" /C:"worker\run.py" > "%TEMP%\pzmask_py_%RANDOM%.txt"
+
+REM More reliable targeted kill by command line path using WMIC
+for /f "skip=1 tokens=2 delims==" %%P in ('wmic process where "name='python.exe' and commandline like '%%%CD:\=\\%%%worker\\run.py%%'" get ProcessId /value 2^>nul ^| find "="') do (
+  echo Killing worker PID %%P
+  taskkill /PID %%P /F >nul 2>nul
+)
+
+echo [3/3] Done.
+echo.
+pause
+exit /b 0

@@ -1,0 +1,159 @@
+@echo off
+REM ====================================================================
+REM  PZ MASK v67 POLISHED REFRESH - force 127.0.0.1
+REM  Fixes Windows localhost/IPv6/IPv4 connection problems.
+REM ====================================================================
+setlocal EnableExtensions DisableDelayedExpansion
+cd /d "%~dp0"
+
+set "HERE=%~dp0"
+if "%HERE:~-1%"=="\" set "HERE=%HERE:~0,-1%"
+
+set "HOST=127.0.0.1"
+set "PORT=8080"
+set "URL=http://%HOST%:%PORT%"
+set "APIURL=%URL%/api/index.php?action="
+set "PHPEXE=%HERE%\runtime\php\php.exe"
+set "PHPINI=%HERE%\runtime\php\php.ini"
+set "PYEXE=%HERE%\runtime\miniconda\envs\maskstudio\python.exe"
+if exist "%HERE%\worker\python_path.txt" set /p PYEXE=<"%HERE%\worker\python_path.txt"
+
+echo.
+echo ============================================================
+echo   PZ MASK v67 POLISHED REFRESH
+echo   force 127.0.0.1: frontend -> API -> worker
+echo ============================================================
+echo Folder: %HERE%
+echo URL:    %URL%
+echo.
+
+if not exist "%PHPEXE%" goto nophp
+if not exist "%PYEXE%" goto noenv
+if not exist "%HERE%\worker\config.json" goto nocfg
+
+if not exist "%HERE%\runtime\_launcher" mkdir "%HERE%\runtime\_launcher" >nul 2>nul
+if not exist "%HERE%\runtime\logs" mkdir "%HERE%\runtime\logs" >nul 2>nul
+
+echo [0/6] Forcing worker API base to %APIURL%
+"%PYEXE%" "%HERE%\tools\fix_api_base_127001.py" "%HERE%\worker\config.json" "%APIURL%" >nul 2>nul
+
+set "FRONTBAT=%HERE%\runtime\_launcher\frontend_v67.cmd"
+set "WORKBAT=%HERE%\runtime\_launcher\worker_v67.cmd"
+
+REM --- frontend launcher, bind directly to 127.0.0.1
+> "%FRONTBAT%" echo @echo off
+>>"%FRONTBAT%" echo title PZ MASK - FRONTEND
+>>"%FRONTBAT%" echo cd /d "%HERE%"
+>>"%FRONTBAT%" echo echo.
+>>"%FRONTBAT%" echo echo ============================================================
+>>"%FRONTBAT%" echo echo   PZ MASK frontend/server
+>>"%FRONTBAT%" echo echo   URL: %URL%
+>>"%FRONTBAT%" echo echo   Bound to: %HOST%:%PORT%
+>>"%FRONTBAT%" echo echo   Close this window to stop frontend.
+>>"%FRONTBAT%" echo echo ============================================================
+>>"%FRONTBAT%" echo echo.
+>>"%FRONTBAT%" echo "%PHPEXE%" -c "%PHPINI%" -S %HOST%:%PORT% -t "%HERE%" "%HERE%\router.php"
+>>"%FRONTBAT%" echo echo.
+>>"%FRONTBAT%" echo echo Frontend stopped.
+>>"%FRONTBAT%" echo pause
+
+REM --- worker launcher
+> "%WORKBAT%" echo @echo off
+>>"%WORKBAT%" echo title PZ MASK - WORKER
+>>"%WORKBAT%" echo set PYTHONUTF8=1
+>>"%WORKBAT%" echo set "HF_HOME=%HERE%\runtime\hf_cache"
+>>"%WORKBAT%" echo if exist "%HERE%\worker\hf_token.txt" ^(
+>>"%WORKBAT%" echo   set /p HF_TOKEN=^<"%HERE%\worker\hf_token.txt"
+>>"%WORKBAT%" echo   set "HUGGINGFACE_HUB_TOKEN=%%HF_TOKEN%%"
+>>"%WORKBAT%" echo   echo [OK] Hugging Face token loaded from worker\hf_token.txt
+>>"%WORKBAT%" echo ^)
+>>"%WORKBAT%" echo cd /d "%HERE%"
+>>"%WORKBAT%" echo echo.
+>>"%WORKBAT%" echo echo ============================================================
+>>"%WORKBAT%" echo echo   PZ MASK worker
+>>"%WORKBAT%" echo echo   API: %APIURL%
+>>"%WORKBAT%" echo echo   Close this window to stop worker.
+>>"%WORKBAT%" echo echo ============================================================
+>>"%WORKBAT%" echo echo.
+>>"%WORKBAT%" echo "%PYEXE%" "%HERE%\tools\fix_api_base_127001.py" "%HERE%\worker\config.json" "%APIURL%"
+>>"%WORKBAT%" echo echo Checking PyTorch/CUDA...
+>>"%WORKBAT%" echo "%PYEXE%" "%HERE%\worker\device_check.py"
+>>"%WORKBAT%" echo if errorlevel 1 ^(
+>>"%WORKBAT%" echo   echo.
+>>"%WORKBAT%" echo   echo [WARN] CUDA check failed. Worker will still start and print details.
+>>"%WORKBAT%" echo   echo.
+>>"%WORKBAT%" echo ^)
+>>"%WORKBAT%" echo echo Starting worker...
+>>"%WORKBAT%" echo "%PYEXE%" "%HERE%\worker\run.py" --config "%HERE%\worker\config.json"
+>>"%WORKBAT%" echo echo.
+>>"%WORKBAT%" echo echo Worker stopped.
+>>"%WORKBAT%" echo pause
+
+echo [1/6] Stopping any old server on port %PORT%...
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":%PORT% " ^| findstr "LISTENING"') do (
+  echo       killing old PID %%P
+  taskkill /PID %%P /F >nul 2>nul
+)
+
+echo [2/6] Starting frontend/server on %URL% ...
+start "PZ MASK - FRONTEND" "%FRONTBAT%"
+
+echo [3/6] Waiting for API on 127.0.0.1, max 20 seconds...
+set /a tries=0
+:wait_api
+timeout /t 1 /nobreak >nul
+curl.exe --ipv4 --connect-timeout 1 --max-time 2 -fsS "%APIURL%" >nul 2>nul
+if not errorlevel 1 goto api_ready
+set /a tries+=1
+if %tries% GEQ 20 goto api_failed
+echo       waiting... %tries%/20
+goto wait_api
+
+:api_ready
+echo       API OK on %APIURL%
+
+echo [4/6] Opening browser...
+start "" "%URL%"
+
+echo [5/6] Starting worker...
+start "PZ MASK - WORKER" "%WORKBAT%"
+
+echo [6/6] Done.
+echo.
+echo ============================================================
+echo   PZ MASK launched on %URL%
+echo   Important: use 127.0.0.1, not localhost.
+echo ============================================================
+echo.
+pause
+exit /b 0
+
+:api_failed
+echo.
+echo [ERROR] API did not answer on %APIURL%
+echo.
+echo Check the FRONTEND window. It should show:
+echo   PHP Development Server ^(http://127.0.0.1:8080^) started
+echo.
+echo Now opening browser anyway:
+start "" "%URL%"
+echo.
+pause
+exit /b 1
+
+:nophp
+echo [ERROR] PHP runtime not found:
+echo         %PHPEXE%
+pause
+exit /b 1
+
+:noenv
+echo [ERROR] Python runtime not found:
+echo         %PYEXE%
+pause
+exit /b 1
+
+:nocfg
+echo [ERROR] Missing worker\config.json.
+pause
+exit /b 1
