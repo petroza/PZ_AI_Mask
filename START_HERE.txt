@@ -1,10 +1,12 @@
 START HERE
 
-Run:
-  INSTALL_PZ_MASK_FOR_COLLEAGUES.bat
+Install package (Windows 11, local only):
+  PZ_MASK_v73_WIN11_LOCAL.zip
 
-After installation:
-  START.bat
+Steps:
+  1. Extract the WHOLE ZIP.
+  2. Run INSTALL_PZ_MASK.bat and pick a target folder.
+  3. After it finishes, start the app from that folder with START.bat.
 
 URL:
-  http://127.0.0.1:8080
+  http://127.0.0.1:8080   (use 127.0.0.1, not localhost)

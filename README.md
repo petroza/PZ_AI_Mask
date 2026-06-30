@@ -1,152 +1,104 @@
 # PZ AI Mask Studio
 
-**Current stable build: PZ_MASK_v72_COLLEAGUES_AUTOINSTALL**
+**Aktuální verze: `PZ_MASK_v73_WIN11_LOCAL`**
 
-PZ AI Mask Studio is a local Windows tool for creating person/object masks from video and exporting clean luma mattes for editing, compositing and post-production workflows.
+PZ AI Mask Studio je **lokální** Windows nástroj pro tvorbu masek osob/objektů
+z videa a export čistých luma matte pro střih, kompozit a postprodukci
+(Premiere / After Effects). Běží **jen na tvém PC** ve webovém prohlížeči na
+adrese `http://127.0.0.1:8080` — nic se nenahrává na web ani do cloudu.
 
-It runs locally in the browser with a PHP frontend/API and a Python GPU worker. The current package is prepared as a colleague-friendly auto-installer.
+Pod kapotou: PHP frontend/API + Python GPU worker (SAM 2.1 tracking,
+MatAnyone 2 matting, RMBG luma).
 
-## Download
+---
 
-Use the latest installer package uploaded in this repository:
+## Stažení a instalace (Windows 11, lokálně)
 
-- `PZ_MASK_v72_COLLEAGUES_AUTOINSTALL.zip`
+Stáhni instalační balík z tohoto repozitáře:
 
-## Quick install for colleagues
+- **`PZ_MASK_v73_WIN11_LOCAL.zip`**
 
-1. Download and extract the ZIP.
-2. Run `INSTALL_PZ_MASK_FOR_COLLEAGUES.bat`.
-3. Select the target installation folder.
-4. After installation, start the app with `START.bat`.
-5. Open `http://127.0.0.1:8080`.
+Pak:
 
-For daily use, colleagues should only run:
+1. **Rozbal celý ZIP** do nějaké složky (pravý klik → „Extrahovat vše").
+   Nespouštěj soubory přímo ze ZIPu — nejdřív je rozbal.
+2. Dvojklik na **`INSTALL_PZ_MASK.bat`**.
+   - Když Windows ukáže „Windows ochránil váš počítač" → „Více informací" →
+     „Přesto spustit".
+   - Vyber cílovou složku (ideálně krátká cesta bez diakritiky, např.
+     `C:\PZ_MASK`).
+   - Instalace stáhne a připraví Python, PHP, modely a knihovny. Běží jen
+     jednou a chvíli to trvá.
+3. Po dokončení spouštěj appku z nainstalované složky přes **`START.bat`**.
+   V prohlížeči se sám otevře `http://127.0.0.1:8080`.
 
-```bat
-START.bat
-```
+### Co potřebuješ
 
-Do not run `run_worker.bat` directly unless debugging.
+- Windows 10/11 (64-bit).
+- NVIDIA GPU s aktuálním ovladačem (doporučeno; bez něj jede pomalu na CPU).
+- ~15 GB volného místa.
+- Internet **při první instalaci** (stahuje se několik GB: PyTorch CUDA,
+  modely, PHP). Potom appka funguje offline.
 
-## What the app can do now
-
-### Video mask creation
-
-- Upload video files and prepare them for mask tracking.
-- Open a browser-based masking editor.
-- Select the subject with points or a rectangle.
-- Track the selected subject through the timeline.
-- Preview the mask on black, white or red background.
-- Export a black/white luma matte where white is the subject and black is the background.
-
-### SAM2 tracking workflow
-
-- Uses SAM2-based object/person selection.
-- Supports manual click / rectangle selection for precise tracking.
-- Remembers first object selection while models are loading.
-- Supports keyframe-style correction workflow.
-- Includes preview refresh fixes and alignment fixes from previous updates.
-
-### MatAnyone / refine-edge workflow
-
-- MatAnyone / refine-edge workflow is used when available.
-- Better edge recovery around hair, shoulders, sleeves, feet and difficult silhouettes.
-- Safer preview refinement so clothes/trousers are not accidentally eaten by edge cleanup.
-- Improved silhouette cleanup for luma output.
-
-### RMBG one-click luma mode
-
-- Includes RMBG Luma mode for quick black/white H.264 luma mask generation.
-- Can create a luma mask directly from a video without going through the full manual editor workflow.
-- Supports RMBG-1.4 fallback and RMBG-2.0 when the user has access/token.
-
-### Output
-
-- H.264 luma video output.
-- PNG sequence output when needed.
-- Cleaner luma matte with halo reduction and final contrast fixes.
-- Output is intended for Premiere / After Effects / compositing workflows.
-
-### Local worker and status
-
-- Local Python worker for GPU processing.
-- CUDA/PyTorch device check window.
-- Queue/job status in the web interface.
-- Live tracking preview fallback while the worker is processing.
-- Diagnostics script for sending logs.
-
-## What changed in the current v72 update
-
-### v72 — cumulative stable start fix + colleague installer
-
-This is the current stable base.
-
-- Added colleague auto-installer package.
-- Replaced old v66 startup scripts completely.
-- Startup no longer waits 20 seconds for the API.
-- Startup no longer kills port `8080` automatically.
-- Fixed the old Windows batch issue that caused `Access denied` / `Přístup byl odepřen`.
-- Uses `127.0.0.1:8080` instead of `localhost` to avoid Windows IPv4/IPv6 connection problems.
-- Starts frontend, opens browser, then starts worker.
-- Worker waits/retries if the frontend is not ready yet.
-- Jobs/New Job page is fully in English.
-- Update packs should be built on top of v72 going forward.
-
-### Previous important updates included in v72
-
-- v71: Jobs/New Job page fully translated to English.
-- v70: no API wait startup, faster and safer launch.
-- v69: English success message after update and automatic restart logic.
-- v68: safer update flow groundwork.
-- v67: English job/progress/status messages.
-- v66: forced `127.0.0.1` frontend/API/worker connection fix.
-- v64/v65: stable full package and faster startup fixes.
-- v56/v57: jobs thumbnails and live tracking preview fallback.
-- v52-v54: safer refine-edge preview and silhouette protection.
-- v43-v44: AUTO HQ workflow and Triton-safe SAM2 fallback.
-
-## Recommended workflow
-
-1. Start the app with `START.bat`.
-2. Upload a video or image sequence.
-3. Choose one of the modes:
-   - `SAM2 + MatAnyone` for precise manual selection and tracking.
-   - `RMBG Luma` for fast one-click luma matte generation.
-4. Select/preview the subject.
-5. Run tracking/matting.
-6. Download the H.264 luma output or PNG sequence.
-
-## Troubleshooting
-
-If the app does not respond:
-
-1. Run `STOP_PZ_MASK.bat`.
-2. Start again with `START.bat`.
-3. Open `http://127.0.0.1:8080`.
-
-If logs are needed:
+### Každodenní použití
 
 ```bat
-DIAGNOSE_PZ_MASK.bat
+START.bat            spustí vše (server + worker + prohlížeč)
+STOP_PZ_MASK.bat     vše zastaví
+UNINSTALL.bat        kompletně odinstaluje (smaže nainstalovanou složku)
 ```
 
-Then send the generated diagnostics ZIP.
+---
 
-## Important notes
+## Co appka umí
 
-- The app is intended for local Windows use.
-- Third-party model weights are not bundled in this repository.
-- Models are downloaded locally by the user when needed.
-- Large runtime folders, model checkpoints, uploads, jobs and generated results should not be committed to GitHub.
+- **SAM2 + MatAnyone** — ruční přesný výběr a trackování objektu/osoby:
+  klikem nebo obdélníkem označíš subjekt, tracking ho projede celou stopou,
+  MatAnyone 2 dotáhne jemné okraje (vlasy, ramena, rukávy).
+- **RMBG Luma** — jedním klikem černobílá H.264 luma maska přímo z videa,
+  bez editoru (RMBG-1.4 fallback, RMBG-2.0 s HF tokenem).
+- **Výstup** — H.264 luma video (bílá = objekt, černá = pozadí) nebo PNG
+  sekvence; připravené pro track matte v Premiere / After Effects.
+- **Lokální worker** — kontrola CUDA/PyTorch, fronta úloh a stav v rozhraní,
+  živý náhled trackingu.
 
-## Main upstream projects
+## Co je nového ve v73
+
+- **Rychlejší a stabilní start:** `START.bat` už nečeká naprázdno 20 s na API
+  a už automaticky nezabíjí port 8080. Když server běží, jen ho použije
+  (nespouští druhý server ani druhého workera). Pořadí: frontend → prohlížeč
+  → worker (worker se k API připojuje opakovaně sám).
+- **Spolehlivější `STOP`:** ukončení primárně podle titulku okna
+  (`taskkill /FI WINDOWTITLE`), funguje i na novějších Windows 11 bez WMIC.
+- **Sjednocené verze:** `APP_VERSION.txt`, `START.bat`, `STOP_PZ_MASK.bat`
+  i `update_manifest.json` nově hlásí jednotně v73.
+- **Funkční jádro z v70 zachováno** (SAM2 / MatAnyone 2 / RMBG, PHP API,
+  Python worker) — měnila se jen instalace, spouštění a balení.
+
+## Řešení potíží
+
+- Appka nereaguje: `STOP_PZ_MASK.bat`, pak znovu `START.bat`.
+- V prohlížeči vždy `127.0.0.1`, ne `localhost`.
+- Blokovaný PowerShell: instalátor používá čistě CMD; když přesto selže,
+  spusť `nastroje\INSTALL_NO_POWERSHELL.bat`.
+- Logy k odeslání: `nastroje\DIAGNOSE_PZ_MASK.bat`.
+
+## Poznámky
+
+- Aplikace je určená pro lokální použití na Windows.
+- Váhy modelů třetích stran nejsou součástí repozitáře — stahují se lokálně
+  při instalaci / prvním běhu.
+- Velké runtime složky, checkpointy, uploady, joby a výsledky se necommitují.
+
+## Hlavní upstream projekty
 
 - SAM2: https://github.com/facebookresearch/sam2
-- RMBG models: https://huggingface.co/briaai
+- RMBG modely: https://huggingface.co/briaai
 - MatAnyone: https://github.com/pq-yang/MatAnyone
 - FFmpeg: https://ffmpeg.org/
 - PyTorch: https://pytorch.org/
 
-## License
+## Licence
 
-Application wrapper code is MIT licensed. Third-party models and packages remain under their own licenses.
+Kód wrapperu aplikace je pod licencí MIT. Modely a balíčky třetích stran
+zůstávají pod svými vlastními licencemi.
