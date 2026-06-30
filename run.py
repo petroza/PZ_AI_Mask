@@ -1079,9 +1079,20 @@ def process_rmbg_job(api, cfg, job, work):
     if job.get("source_type") != "video":
         raise RuntimeError("RMBG Luma mode only supports video files.")
 
+    # Throttle progress posts (see SAM2 path) but always post when metadata
+    # (frame_count/size/fps) is attached, since that info must reach the server.
+    _rep = {"t": 0.0, "f": -1.0, "s": None}
+
     def report(st, frac, msg, **meta):
+        f = round(float(frac), 4)
+        now = time.time()
+        has_meta = any(meta.get(k) is not None for k in ("frame_count", "width", "height", "fps"))
+        force = has_meta or (st != _rep["s"]) or f >= 1.0 or f <= 0.0
+        if not (force or (f - _rep["f"]) >= 0.01 or (now - _rep["t"]) >= 0.4):
+            return
+        _rep["t"] = now; _rep["f"] = f; _rep["s"] = st
         _set_runtime_state(job_id=job_id, stage=st, stage_msg=msg)
-        api.progress(job_id, status=st, progress=round(float(frac), 4), stage_msg=msg,
+        api.progress(job_id, status=st, progress=f, stage_msg=msg,
                      frame_count=meta.get("frame_count"), width=meta.get("width"),
                      height=meta.get("height"), fps=meta.get("fps"))
         print(f"  [{st:10s}] {frac*100:5.1f}%  {msg}")
@@ -1171,11 +1182,23 @@ def process_job(api, cfg, job):
     if (job.get("engine") or "sam2") == "rmbg":
         return process_rmbg_job(api, cfg, job, work)
 
+    # Throttle status updates so tight loops (e.g. Refine Edge) don't flood the
+    # local API with hundreds of POSTs/sec (which caused urllib3 "connection pool
+    # is full" warnings). Stop requests are still checked on every call so Cancel
+    # stays responsive.
+    _rep = {"t": 0.0, "f": -1.0, "s": None}
+
     def report(st, frac, msg):
-        _set_runtime_state(job_id=job_id, stage=st, stage_msg=msg)
         if _consume_stop_request(token):
             raise RuntimeError('Stopped by user')
-        api.progress(job_id, status=st, progress=round(float(frac), 4), stage_msg=msg)
+        f = round(float(frac), 4)
+        now = time.time()
+        force = (st != _rep["s"]) or f >= 1.0 or f <= 0.0
+        if not (force or (f - _rep["f"]) >= 0.01 or (now - _rep["t"]) >= 0.4):
+            return
+        _rep["t"] = now; _rep["f"] = f; _rep["s"] = st
+        _set_runtime_state(job_id=job_id, stage=st, stage_msg=msg)
+        api.progress(job_id, status=st, progress=f, stage_msg=msg)
         print(f"  [{st:10s}] {frac*100:5.1f}%  {msg}")
 
     # ========================================================================
