@@ -1,6 +1,6 @@
 {
   "_comment": "PZ Mask Studio worker — zkopíruj na config.json a uprav.",
-  "api_base": "http://localhost:8080/api/index.php?action=",
+  "api_base": "http://127.0.0.1:8080/api/index.php?action=",
   "worker_token": "CHANGE-ME-worker-secret-7f3a9c",
   "worker_id": "local-auto",
   "poll_interval_sec": 4,
@@ -33,9 +33,19 @@
     "ckpt_v2": "./checkpoints/matanyone2.pth",
     "repo_dir": "./MatAnyone",
     "ckpt": "./checkpoints/matanyone.pth",
-    "max_size": null,
+    "max_size": "auto",
     "max_long_edge": 1920,
-    "_comment_maxsize": "max_size omezí delší hranu vstupu pro MatAnyone 2 (null = bez limitu). max_long_edge platí jen pro v1 fallback."
+    "_comment_maxsize": "V43 AUTO HQ: auto podle GPU a rozlišení. Typicky 1536 na RTX 4070 Ti/12GB, 1920 na větší VRAM; 960 už není finální kvalita.",
+    "max_size_min": 1280,
+    "max_size_hq": 1536,
+    "max_size_extreme": 1920,
+    "max_size_hard_max": 1920,
+    "auto_max_size_ladder": [
+      1920,
+      1536,
+      1280,
+      960
+    ]
   },
   "vram": {
     "sequential_models": true,
@@ -46,7 +56,7 @@
   },
   "ffmpeg": "ffmpeg",
   "jpeg_quality": 90,
-  "full_frame_format": "png",
+  "full_frame_format": "jpg",
   "_comment_full_frame_format": "jpg q100 = rychlé a vizuálně bezztrátové; SAM2 čte JPG přímo (žádný transcode). png = striktně bezztrátový vstup mattingu, ale pomalejší.",
   "full_jpeg_quality": 100,
   "preview_max_long_edge": 720,
@@ -54,11 +64,11 @@
   "auto_download_sam2": true,
   "sam2_download_base": "https://dl.fbaipublicfiles.com/segment_anything_2/092824",
   "sam_output_mode": "h264_luma",
-  "h264_luma_crf": 10,
+  "h264_luma_crf": 12,
   "luma_soft_edges": true,
   "luma_binary_threshold": 16,
   "sam2_config_raw_base": "https://raw.githubusercontent.com/facebookresearch/sam2/main/sam2/configs/sam2.1",
-  "h264_luma_preset": "slow",
+  "h264_luma_preset": "veryfast",
   "h264_luma_profile": "high",
   "h264_luma_level": "4.2",
   "_comment_quality_fix_v9": "Finální H.264 luma export bere full-res masky z PNG/full frames. Preview JPG se nesmí použít pro finální výstup.",
@@ -66,5 +76,22 @@
   "luma_binary_feather": 0.0,
   "preview_full_quality": true,
   "_comment_preview_full_quality": "true = editor dostane plné framy v plné kvalitě (q100). false = zmenšené náhledy (rychlejší upload).",
-  "editor_jpeg_quality": 100
+  "editor_jpeg_quality": 100,
+  "status_interval_sec": 1.5,
+  "auto_hq": false,
+  "auto_hq_force_large": false,
+  "sam2_vos_optimized": "auto",
+  "rmbg_default_crf": 12,
+  "rmbg_h264_preset": "veryfast",
+  "_comment_fast_encode": "FAST ENCODE: veryfast + CRF 12 výrazně zrychlí H.264 export proti původnímu slow/CRF8. Pro maximální kvalitu lze vrátit preset slow a CRF 8.",
+  "_comment_auto_hq": "FAST CONTROL: false = UI volby se respektují. True by znovu vynutilo Large + MatAnyone2 + HQ.",
+  "output_dir": null,
+  "_comment_output_dir": "Optional default folder where finished masks are also copied (e.g. \"D:\\\\shots\\\\masks\"). null = only keep them in the app. The web UI 'Output folder' field overrides this per job.",
+  "performance": {
+    "mode": "auto",
+    "cudnn_benchmark": true,
+    "tf32": true,
+    "h264_encoder": "auto",
+    "ffmpeg_threads": 0
+  }
 }

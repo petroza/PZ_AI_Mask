@@ -1,25 +1,18 @@
-@echo off
-REM ====================================================================
-REM  Optional: save Hugging Face token for gated briaai/RMBG-2.0
-REM  Run this only if you want to use RMBG-2.0 in the UI.
-REM ====================================================================
-setlocal EnableExtensions DisableDelayedExpansion
-cd /d "%~dp0.."
-if not exist "worker" mkdir "worker" >nul 2>nul
-
-echo.
-echo  RMBG-2.0 is a gated Hugging Face model.
-echo  First make sure your account has access to briaai/RMBG-2.0.
-echo  Then paste a Hugging Face token with read permission.
-echo.
-set /p HFTOKEN="HF token: "
-if "%HFTOKEN%"=="" (
-  echo Empty token, nothing saved.
-  pause
-  exit /b 1
-)
->"worker\hf_token.txt" echo %HFTOKEN%
-echo.
-echo [OK] Token saved to worker\hf_token.txt
-echo Restart START.bat / worker before using RMBG-2.0.
-pause
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PZ MASK — RMBG Luma</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#071018;--panel:#0d1b26;--line:#1c3446;--txt:#eef7ff;--muted:#8fa5b6;--acc:#22e3a4;--bad:#ff647c;--warn:#ffb454}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#112436,#071018 55%);font-family:'Space Grotesk',Segoe UI,Arial,sans-serif;color:var(--txt);min-height:100vh}.wrap{max-width:820px;margin:0 auto;padding:28px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}a{color:#7fd7ff;text-decoration:none}.card{background:rgba(13,27,38,.9);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 20px 60px #0008}h1{font-size:28px;margin:0 0 6px}.sub{color:var(--muted);font-family:'JetBrains Mono';font-size:12px}.pill{display:inline-block;border:1px solid #2a5168;border-radius:999px;padding:6px 10px;color:#a9c0d0;font-size:12px;margin:4px 6px 0 0}.bar{height:14px;background:#06111a;border:1px solid #1e3a4c;border-radius:999px;overflow:hidden;margin:18px 0}.fill{height:100%;width:0;background:linear-gradient(90deg,#20d193,#22e3a4);transition:width .25s}.status{white-space:pre-wrap;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;color:#d9f2ff;background:#06111a;border-radius:12px;padding:14px;min-height:130px}.btn{display:none;text-align:center;margin-top:16px;text-decoration:none;border-radius:12px;background:var(--acc);color:#06120f;font-weight:900;padding:14px}.btn.secondary{background:#112f44;color:#d8f4ff;border:1px solid #24536c}.err{color:var(--bad)}.warn{color:var(--warn)}.rbrand{display:flex;align-items:center;gap:10px}.rbrand img{width:30px;height:30px;border-radius:9px;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 6px 18px rgba(52,195,255,.18)}.rbrand .wm{font-weight:800;font-size:15px;letter-spacing:.3px;line-height:1.05}.rbrand .wm b{color:var(--acc)}.rbrand .wm small{display:block;font-family:'JetBrains Mono';font-size:8.5px;color:var(--muted);letter-spacing:1.4px;font-weight:600;margin-top:2px}.top .right{display:flex;align-items:center;gap:14px}.top a{font-size:12.5px}.downloads{display:grid;grid-template-columns:1fr;gap:10px}.downloads .btn{margin-top:16px}@media(min-width:640px){.downloads{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body><div class="wrap"><div class="top"><div class="rbrand"><img src="favicon.svg" alt="PZ MASK"><div class="wm"><b>PZ</b> MASK<small>RMBG LUMA</small></div></div><div class="right"><a href="index.html">← back to jobs</a><span class="sub" id="clock"></span></div></div><div class="card"><h1 id="title">RMBG Luma</h1><div class="sub" id="meta">Loading…</div><div style="margin-top:12px"><span class="pill">RMBG</span><span class="pill">H.264 MP4</span><span class="pill">luma matte</span></div><div class="bar"><div class="fill" id="fill"></div></div><div class="status" id="status">Waiting for API…</div><div class="downloads"><a class="btn" id="download" href="#">Download H.264 MP4</a><a class="btn secondary" id="downloadpng" href="#">Download PNG sequence ZIP</a></div></div></div>
+<script>
+const API='api/index.php?action=';const token=new URLSearchParams(location.search).get('token');const $=s=>document.querySelector(s);if(!token)location.href='index.html';function esc(s){return(s+'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString()}setInterval(tick,1000);tick();
+function setDownloads(j){const done=j.status==='done', r=j.results||{};$('#download').style.display=(done&&(r.mp4||(!r.files&&!r.png_zip)))?'block':'none';$('#download').href=API+'result&token='+encodeURIComponent(token)+'&f=mp4';$('#downloadpng').style.display=(done&&r.png_zip)?'block':'none';$('#downloadpng').href=API+'result&token='+encodeURIComponent(token)+'&f=png_sequence';}
+async function poll(){try{const d=await(await fetch(API+'job&token='+encodeURIComponent(token)+'&_='+Date.now())).json();if(!d.ok){$('#status').innerHTML='<span class="err">Job not found.</span>';return}const j=d.job;__rs=j.status;$('#title').textContent=j.name||'RMBG Luma';$('#meta').textContent=`${j.status} · ${j.width||'?'}×${j.height||'?'} · ${j.frame_count||0} frames · model ${j.rmbg_model_id||'RMBG'}`;$('#fill').style.width=Math.round((j.progress||0)*100)+'%';let text=`Status: ${j.status}\nProgress: ${Math.round((j.progress||0)*100)}%\n${j.stage_msg||''}`;if(j.error_msg)text+='\n\nERROR: '+j.error_msg;if(j.status==='done'&&j.results&&j.results.files&&j.results.files.length===0)text+='\n\nDone, but the API did not find the result file.';$('#status').textContent=text;setDownloads(j);if(j.status==='error')$('#status').classList.add('err');else $('#status').classList.remove('err');}catch(e){$('#status').innerHTML='<span class="err">API unavailable: '+esc(e.message)+'</span>'}}
+let __rs=null,__rt=null;function rmbgDelay(){if(document.hidden)return 8000;if(__rs==='done'||__rs==='error')return 5000;return 1200;}function rmbgLoop(){if(__rt)clearTimeout(__rt);poll().finally(()=>{__rt=setTimeout(rmbgLoop,rmbgDelay());});}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)rmbgLoop();});rmbgLoop();
+</script></body></html>

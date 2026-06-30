@@ -1,146 +1,30 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PZ MASK — VFX Matte Studio</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{--bg:#070a0d;--panel:#0e1419;--panel2:#131b22;--line:#1e2932;--ink:#e9f1f7;--dim:#7e8c9a;--acc:#2fe39a;--acc2:#28b6ff;--warn:#ffb454;--err:#ff5d5d;--r:12px}
-  *{box-sizing:border-box} html,body{margin:0} body{background:radial-gradient(1100px 520px at 82% -8%,#14242f 0%,transparent 58%),radial-gradient(900px 480px at 12% 108%,#10201c 0%,transparent 60%),var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
-  a{color:var(--acc2);text-decoration:none}.wrap{max-width:1180px;margin:0 auto;padding:34px 22px 80px;position:relative}.logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-weight:700;color:#04130d;font-size:22px;box-shadow:0 0 28px rgba(47,227,154,.4);font-family:'JetBrains Mono'}
-  header{display:flex;align-items:center;gap:15px;margin-bottom:6px}h1{font-size:23px;font-weight:700;letter-spacing:-.4px;margin:0}.sub{color:var(--dim);font-size:12.5px;font-family:'JetBrains Mono',monospace;margin-top:2px;letter-spacing:.2px;line-height:1.45}
-  .grid{display:grid;grid-template-columns:1fr;gap:18px;margin-top:28px}@media(min-width:920px){.grid{grid-template-columns:390px 1fr}}
-  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);padding:20px}.card h2{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin:0 0 16px;font-weight:600;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:8px}.card h2::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
-  .drop{border:1.5px dashed #2b3a45;border-radius:var(--r);padding:30px 16px;text-align:center;cursor:pointer;transition:.18s;background:#0a1015;position:relative;overflow:hidden}.drop:hover,.drop.over{border-color:var(--acc);background:#0c1812}.drop b{display:block;font-size:14.5px;margin-bottom:5px;font-weight:600}.drop span{color:var(--dim);font-size:11.5px;font-family:'JetBrains Mono',monospace}.drop .ico{font-size:26px;margin-bottom:10px;opacity:.8}
-  input[type=text],input[type=number],select{width:100%;background:#0a1015;border:1px solid var(--line);color:var(--ink);padding:11px 13px;border-radius:9px;font-family:'Space Grotesk';font-size:14px;transition:.15s}input[type=text]{margin-top:13px}input:focus,select:focus{outline:none;border-color:var(--acc2);box-shadow:0 0 0 3px rgba(40,182,255,.12)}label.lbl{display:block;color:var(--dim);font-size:11px;font-family:'JetBrains Mono',monospace;margin:13px 0 6px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#c7d5df;margin-top:10px}.chk input{accent-color:var(--acc)}
-  .modebox{border:1px solid var(--line);border-radius:10px;background:#0a1015;padding:12px;margin:13px 0}.modehint{color:var(--dim);font-size:11px;line-height:1.45;margin-top:8px;font-family:'JetBrains Mono',monospace}.rmbg{display:none}.rmbg.on{display:block}.btn{display:inline-flex;align-items:center;gap:8px;background:var(--acc);color:#04130d;border:0;padding:12px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-family:'Space Grotesk';font-size:14px;transition:.15s;width:100%;justify-content:center;margin-top:13px;letter-spacing:.2px}.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;filter:none}.prog{height:6px;background:#0a1015;border-radius:99px;overflow:hidden;margin-top:13px;display:none}.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:.2s}
-  .jobs{display:flex;flex-direction:column;gap:10px;max-height:580px;overflow-y:auto}.job{display:flex;align-items:center;gap:14px;background:#0a1015;border:1px solid var(--line);border-radius:10px;padding:12px 14px;transition:.16s;cursor:pointer}.job:hover{border-color:#34434f;transform:translateY(-1px);background:#0c141b}.thumb{width:68px;height:42px;border-radius:7px;background:#05080b;border:1px solid var(--line);object-fit:cover;flex:none;display:grid;place-items:center;color:var(--dim);font-family:'JetBrains Mono';font-size:10px;overflow:hidden}.thumb video,.thumb img{width:100%;height:100%;object-fit:cover;display:block}.thumb.broken{opacity:.45}.job .meta{flex:1;min-width:0}.job .nm{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.job .st{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--dim);margin-top:3px}.pill{font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:4px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.6px;border:1px solid;font-weight:600;flex:none}.pill.created,.pill.ready{color:var(--acc2);border-color:#1f4a66;background:#0a1c28}.pill.queued,.pill.claimed,.pill.extracting,.pill.tracking,.pill.matting,.pill.rmbg{color:var(--warn);border-color:#5a4420;background:#241b0a}.pill.done{color:var(--acc);border-color:#1f5a3a;background:#0a2417}.pill.error{color:var(--err);border-color:#5a2020;background:#240a0a}.empty{color:var(--dim);text-align:center;padding:34px;font-size:13px;font-family:'JetBrains Mono',monospace}.jobdel{flex:none;background:#1a0c0c;color:#ff9b9b;border:1px solid #4c1e1e;border-radius:8px;padding:7px 9px;font-family:'JetBrains Mono';font-size:10px;font-weight:700;cursor:pointer}.jobdel:hover{background:#2a0d0d;color:#fff}.jobtools{display:flex;gap:8px;margin:-4px 0 12px;flex-wrap:wrap}.mini{background:#0a1015;color:#c9d6df;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:'JetBrains Mono';font-size:10px;cursor:pointer}.mini:hover{border-color:#36505f;color:#fff}.mini.danger{color:#ff9b9b;border-color:#4c1e1e;background:#160b0b}.topactions{margin-left:auto;display:flex;gap:8px;align-items:center}
-  .pipeline{display:flex;gap:7px;margin-top:18px;flex-wrap:wrap}.step{flex:1;min-width:96px;background:#0a1015;border:1px solid var(--line);border-radius:9px;padding:11px 12px}.step .n{font-family:'JetBrains Mono';font-size:10px;color:var(--acc);letter-spacing:.5px}.step .t{font-size:12.5px;margin-top:4px;font-weight:600}.step .d{font-size:10.5px;color:var(--dim);margin-top:2px;font-family:'JetBrains Mono'}
-  .foot{margin-top:26px;color:var(--dim);font-size:10.5px;font-family:'JetBrains Mono',monospace;text-align:center;letter-spacing:.3px}
-</style>
-<style id="pz-skin">
-  :root{--acc:#2fe39a;--acc2:#34c3ff}
-  ::selection{background:rgba(47,227,154,.25)}
-  .jobs::-webkit-scrollbar{width:10px}.jobs::-webkit-scrollbar-thumb{background:#1b2630;border-radius:99px;border:2px solid var(--panel)}
-  .ic{width:18px;height:18px;flex:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;fill:none;display:inline-block;vertical-align:middle}
-  .iconset{position:absolute;width:0;height:0;overflow:hidden}
-  /* brand */
-  header{gap:14px;margin-bottom:4px}
-  .logomark{width:46px;height:46px;border-radius:12px;display:block;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 10px 30px rgba(52,195,255,.22)}
-  h1{font-size:24px}h1 b{color:var(--acc)}
-  .sub{letter-spacing:.3px}
-  /* drop zone */
-  .drop .ico{display:grid;place-items:center;margin-bottom:8px;opacity:.85}
-  .drop .ico .ic{width:30px;height:30px;color:var(--acc)}
-  .drop:hover .ico .ic,.drop.over .ico .ic{color:var(--acc)}
-  /* mini tools */
-  .mini{display:inline-flex;align-items:center;gap:6px}
-  .mini .ic{width:14px;height:14px}
-  /* job rows */
-  .job{transition:transform .15s,border-color .15s,background .15s}
-  .thumb .ic{width:20px;height:20px;color:var(--dim)}
-  .jobdel{display:inline-flex;align-items:center;gap:5px}
-  .jobdel .ic{width:13px;height:13px}
-  .pipeline .step{transition:border-color .14s}.pipeline .step:hover{border-color:#2c4150}
-  .btn .ic{width:17px;height:17px}
-</style>
-</head>
-<body>
-<svg class="iconset" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
-  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7.5 8.5 12 4l4.5 4.5"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/></symbol>
-  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4.5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14 4.5L20 16"/><path d="M20 20v-4h-4"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/></symbol>
-  <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M3 15h18M8 5v14M16 5v14"/></symbol>
-  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z" fill="currentColor" stroke="none"/></symbol>
-</defs></svg>
-<div class="wrap">
-  <header><img class="logomark" src="favicon.svg" alt="PZ MASK"><div><h1><b>PZ</b> MASK</h1><div class="sub">SAM 2.1 tracking · MatAnyone 2 matting · RMBG luma · local GPU worker</div></div><div class="topactions"><a class="mini" href="update.html">Install Update</a></div></header>
-  <div class="grid">
-    <div class="card">
-      <h2>New job</h2>
-      <div class="drop" id="drop"><div class="ico"><svg class="ic"><use href="#i-upload"/></svg></div><b>Drop a video or image sequence</b><span>mp4 · mov · png · exr | up to 4 GB</span><input type="file" id="file" hidden accept=".mp4,.mov,.m4v,.avi,.mkv,.png,.jpg,.jpeg,.exr,.tif,.tiff"></div>
-      <input type="text" id="name" placeholder="Job name (e.g. shot_07_subject)">
-      <div class="modebox">
-        <label class="lbl" style="margin-top:0">Režim</label>
-        <select id="engine">
-          <option value="sam2">SAM2 + MatAnyone — ruční klik / přesné trackování</option>
-          <option value="rmbg">RMBG Luma — jedním klikem H.264 luma maska</option>
-        </select>
-        <div class="modehint" id="modehint">Nejdřív se video rozbalí na framy, potom v editoru klikneš na objekt a pustíš tracking/matting.</div>
-        <div class="rmbg" id="rmbgbox">
-          <label class="lbl">RMBG model</label>
-          <select id="rmbg_model_id">
-            <option value="briaai/RMBG-1.4">RMBG-1.4 fallback — bez gated přístupu</option>
-            <option value="briaai/RMBG-2.0">RMBG-2.0 — lepší, ale vyžaduje HF_TOKEN/přístup</option>
-          </select>
-          <div class="row">
-            <div><label class="lbl">Edge blur</label><input id="rmbg_blur" type="number" min="0" max="8" step="0.25" value="0"></div>
-            <div><label class="lbl">Gamma</label><input id="rmbg_gamma" type="number" min="0.2" max="5" step="0.1" value="1.0"></div>
-            <div><label class="lbl">CRF</label><input id="rmbg_crf" type="number" min="8" max="23" step="1" value="12"></div>
-          </div>
-          <label class="chk"><input type="checkbox" id="rmbg_invert"> invertovat masku</label>
-          <label class="chk"><input type="checkbox" id="rmbg_cpu"> vynutit CPU</label>
-        </div>
-      </div>
-      <div class="prog" id="prog"><i></i></div>
-      <div class="sub" id="upmsg" style="margin-top:8px"></div>
-      <button class="btn" id="go" disabled><svg class="ic"><use href="#i-spark"/></svg><span id="golabel">Upload & open editor</span></button>
-      <div class="pipeline" id="steps">
-        <div class="step"><div class="n">01</div><div class="t">Click subject</div><div class="d">one click</div></div>
-        <div class="step"><div class="n">02</div><div class="t">SAM 2.1 track</div><div class="d">whole shot</div></div>
-        <div class="step"><div class="n">03</div><div class="t">MatAnyone 2</div><div class="d">fine alpha</div></div>
-      </div>
-    </div>
-    <div class="card"><h2>Jobs</h2><div class="jobtools"><button class="mini" id="refreshjobs"><svg class="ic"><use href="#i-refresh"/></svg>Refresh</button><button class="mini danger" id="clearerrors"><svg class="ic"><use href="#i-trash"/></svg>Delete errored</button><button class="mini danger" id="clearall"><svg class="ic"><use href="#i-trash"/></svg>Delete all</button></div><div class="jobs" id="jobs"><div class="empty">Loading…</div></div></div>
-  </div>
-  <div class="foot">PZ MASK · local GPU worker · SAM 2.1 + MatAnyone 2 + RMBG · © <span id="yr"></span></div>
-</div>
-<script>
-const API='api/index.php?action='; const $=s=>document.querySelector(s); $('#yr').textContent=new Date().getFullYear();
-let chosen=null; const drop=$('#drop'), file=$('#file'), go=$('#go'), engine=$('#engine');
-drop.onclick=()=>file.click(); ['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')})); ['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over')})); drop.addEventListener('drop',ev=>{if(ev.dataTransfer.files[0])setFile(ev.dataTransfer.files[0])}); file.onchange=()=>{if(file.files[0])setFile(file.files[0])};
-function setFile(f){chosen=f;drop.querySelector('b').textContent=f.name;drop.querySelector('span').textContent=(f.size/1048576).toFixed(1)+' MB';if(!$('#name').value)$('#name').value=f.name.replace(/\.[^.]+$/,'');go.disabled=false;updateMode();}
-function updateMode(){const m=engine.value;$('#rmbgbox').classList.toggle('on',m==='rmbg');$('#golabel').textContent=m==='rmbg'?'Upload & start RMBG Luma':'Upload & open editor';$('#modehint').textContent=m==='rmbg'?'Worker rovnou z videa vyrobí černobílou H.264 luma masku. Bílá = objekt, černá = pozadí.':'Nejdřív se video rozbalí na framy, potom v editoru klikneš na objekt a pustíš tracking/matting.';$('#steps').innerHTML=m==='rmbg'?'<div class="step"><div class="n">01</div><div class="t">Upload video</div><div class="d">no editor</div></div><div class="step"><div class="n">02</div><div class="t">RMBG mask</div><div class="d">per frame</div></div><div class="step"><div class="n">03</div><div class="t">H.264 Luma</div><div class="d">Premiere matte</div></div>':'<div class="step"><div class="n">01</div><div class="t">Click subject</div><div class="d">one click</div></div><div class="step"><div class="n">02</div><div class="t">SAM 2.1 track</div><div class="d">whole shot</div></div><div class="step"><div class="n">03</div><div class="t">MatAnyone 2</div><div class="d">fine alpha</div></div>';}
-engine.onchange=updateMode; updateMode();
-go.onclick=async()=>{if(!chosen)return;go.disabled=true;const fd=new FormData();fd.append('file',chosen);fd.append('name',$('#name').value||'Untitled');fd.append('engine',engine.value);if(engine.value==='rmbg'){fd.append('rmbg_model_id',$('#rmbg_model_id').value);fd.append('rmbg_blur_radius',$('#rmbg_blur').value);fd.append('rmbg_gamma',$('#rmbg_gamma').value);fd.append('rmbg_crf',$('#rmbg_crf').value);fd.append('rmbg_invert',$('#rmbg_invert').checked?'true':'false');fd.append('rmbg_force_cpu',$('#rmbg_cpu').checked?'true':'false');}
- const prog=$('#prog');prog.style.display='block';const bar=prog.querySelector('i');try{const token=await new Promise((res,rej)=>{const xhr=new XMLHttpRequest();xhr.open('POST',API+'create');xhr.upload.onprogress=e=>{if(e.lengthComputable)bar.style.width=(e.loaded/e.total*100)+'%'};xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);d.ok?res(d.token):rej(new Error(d.error||'error'))}catch(_){rej(new Error('invalid server response'))}};xhr.onerror=()=>rej(new Error('network error'));xhr.send(fd)});$('#upmsg').textContent=engine.value==='rmbg'?'Done — opening RMBG status…':'Done — opening editor…';location.href=(engine.value==='rmbg'?'rmbg.html?token=':'editor.html?token=')+encodeURIComponent(token);}catch(err){$('#upmsg').textContent='Error: '+err.message;go.disabled=false;}};
-const PILL=s=>`<span class="pill ${s}">${s}</span>`;function esc(s){return(s+'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function thumbHTML(j){
-  // V56: Jobs list must always show a preview.
-  // When frames are not extracted yet, fallback to the original uploaded video.
-  const tok=encodeURIComponent(j.token||'');
-  const isVideo=(j.source_type||'video')==='video';
-  if(isVideo){
-    return `<video class="thumb" muted playsinline preload="metadata" src="api/index.php?action=source-video&token=${tok}#t=0.08" onerror="this.outerHTML='<div class=&quot;thumb broken&quot;>VIDEO</div>'"></video>`;
-  }
-  if((j.frame_count||0)>0){
-    return `<img class="thumb" src="api/index.php?action=frame&token=${tok}&i=0" loading="lazy" onerror="this.outerHTML='<div class=&quot;thumb broken&quot;>IMG</div>'">`;
-  }
-  return `<div class="thumb broken"><svg class="ic"><use href="#i-film"/></svg></div>`;
-}
-async function postJSON(action,payload={}){const r=await fetch(API+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let d={};try{d=await r.json()}catch(_){ }if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));return d}
-async function deleteJob(token){if(!confirm('Smazat job včetně uploadu, framů a výsledků?'))return;await postJSON('delete',{token});await loadJobs()}
-async function bulkDelete(action,label){if(!confirm(label+'?'))return;const d=await postJSON(action,{});await loadJobs();alert('Smazáno: '+(d.deleted||0))}
-let _jobsSig='', _anyBusy=false;
-const BUSY=['queued','claimed','extracting','tracking','matting','rmbg'];
-async function loadJobs(){try{const d=await(await fetch(API+'list&_='+Date.now())).json();const box=$('#jobs');
-  if(!d.ok||!d.jobs.length){_anyBusy=false;if(_jobsSig!=='_empty'){box.innerHTML='<div class="empty">No jobs yet.</div>';_jobsSig='_empty';}return}
-  _anyBusy=d.jobs.some(j=>BUSY.includes(j.status));
-  const sig=d.jobs.map(j=>`${j.token}:${j.status}:${Math.round((j.progress||0)*100)}:${j.frame_count||0}:${j.width||0}:${j.height||0}:${j.source_type||''}:${j.engine||''}:${j.name}`).join('|');
-  if(sig===_jobsSig)return; // unchanged → skip DOM churn (no flicker, scroll & thumbnails kept)
-  _jobsSig=sig;
-  box.innerHTML=d.jobs.map(j=>{const isR=(j.engine||'sam2')==='rmbg';const href=(isR?'rmbg.html?token=':'editor.html?token=')+encodeURIComponent(j.token);const pct=Math.round((j.progress||0)*100);const busy=BUSY.includes(j.status);const thumb=thumbHTML(j);return `<div class="job" onclick="location.href='${href}'">${thumb}<div class="meta"><div class="nm">${esc(j.name)}</div><div class="st">${isR?'RMBG Luma':(j.source_type||'video')} · ${j.width||'?'}×${j.height||'?'} · ${j.frame_count||0} frames${busy?(' · '+pct+'%'):''}</div></div>${PILL(j.status)}<button class="jobdel" onclick="event.stopPropagation();deleteJob('${j.token}')"><svg class="ic"><use href="#i-trash"/></svg>DELETE</button></div>`}).join('')
-}catch(err){const m='_err:'+esc(err.message||err);if(_jobsSig!==m){$('#jobs').innerHTML='<div class="empty">API unavailable: '+esc(err.message||err)+'</div>';_jobsSig=m;}}}
-$('#refreshjobs').onclick=loadJobs;$('#clearerrors').onclick=()=>bulkDelete('delete-errors','Smazat všechny ERROR joby');$('#clearall').onclick=()=>bulkDelete('delete-all','Smazat opravdu všechny joby');
-let _ljTimer=null;
-function jobsLoop(){ if(!document.hidden) loadJobs(); _ljTimer=setTimeout(jobsLoop, document.hidden?9000:(_anyBusy?2500:6000)); }
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden) loadJobs(); });
-jobsLoop();
-<!-- V56 jobs list video thumbnail fallback -->
-</script>
-</body>
-</html>
+#!/usr/bin/env python3
+import json
+import os
+import sys
+from pathlib import Path
+
+def main():
+    if len(sys.argv) < 3:
+        print("usage: fix_api_base_127001.py <config.json> <api_base>")
+        return 2
+    cfg_path = Path(sys.argv[1])
+    api_base = sys.argv[2]
+    if not cfg_path.exists():
+        print(f"[ERROR] missing config: {cfg_path}")
+        return 1
+    try:
+        data = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[ERROR] cannot read config: {e}")
+        return 1
+    old = data.get("api_base")
+    data["api_base"] = api_base
+    tmp = cfg_path.with_suffix(cfg_path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp, cfg_path)
+    print(f"[OK] api_base: {old} -> {api_base}")
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())

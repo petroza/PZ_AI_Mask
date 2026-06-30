@@ -14,23 +14,33 @@ MatAnyone 2 matting, RMBG luma).
 
 ## Stažení a instalace (Windows 11, lokálně)
 
-Stáhni instalační balík z tohoto repozitáře:
+Vyber si jeden ze dvou balíků v tomto repozitáři:
 
-- **`PZ_MASK_v73_WIN11_LOCAL.zip`**
+- **`PZ_MASK_v73_WIN11_PORTABLE.zip`** — *doporučeno.* Portable: rozbalíš
+  kamkoliv (i na externí disk), nainstaluješ do té samé složky a spouštíš
+  odtud. Žádná instalace do systému, žádná práva správce.
+- **`PZ_MASK_v73_WIN11_LOCAL.zip`** — installer s výběrem cílové složky
+  (zkopíruje appku do zvolené složky a tam nainstaluje runtime).
 
-Pak:
+### Portable (doporučeno)
 
-1. **Rozbal celý ZIP** do nějaké složky (pravý klik → „Extrahovat vše").
-   Nespouštěj soubory přímo ze ZIPu — nejdřív je rozbal.
-2. Dvojklik na **`INSTALL_PZ_MASK.bat`**.
+1. **Rozbal celý ZIP** do složky (krátká cesta bez diakritiky, např.
+   `C:\PZ_MASK`). Nespouštěj soubory přímo ze ZIPu — nejdřív je rozbal.
+2. Dvojklik na **`INSTALL_HERE.bat`** — stáhne a připraví Python, PyTorch
+   (CUDA), modely a PHP přímo do té složky (běží jen jednou).
    - Když Windows ukáže „Windows ochránil váš počítač" → „Více informací" →
      „Přesto spustit".
-   - Vyber cílovou složku (ideálně krátká cesta bez diakritiky, např.
-     `C:\PZ_MASK`).
-   - Instalace stáhne a připraví Python, PHP, modely a knihovny. Běží jen
-     jednou a chvíli to trvá.
-3. Po dokončení spouštěj appku z nainstalované složky přes **`START.bat`**.
-   V prohlížeči se sám otevře `http://127.0.0.1:8080`.
+3. Spouštěj přes **`START.bat`**. V prohlížeči se sám otevře
+   `http://127.0.0.1:8080`.
+
+### Installer s výběrem složky
+
+1. Rozbal celý ZIP, dvojklik na **`INSTALL_PZ_MASK.bat`**, vyber cílovou složku.
+2. Po dokončení spouštěj appku z té složky přes **`START.bat`**.
+
+> Pozn.: „portable" znamená celé v jedné složce bez instalace do systému.
+> Runtime (Python/PyTorch/modely, několik GB) se kvůli velikosti nedá přibalit
+> do ZIPu, proto se stáhne jednou online při instalaci. Pak appka běží offline.
 
 ### Co potřebuješ
 
@@ -64,16 +74,28 @@ UNINSTALL.bat        kompletně odinstaluje (smaže nainstalovanou složku)
 
 ## Co je nového ve v73
 
-- **Rychlejší a stabilní start:** `START.bat` už nečeká naprázdno 20 s na API
-  a už automaticky nezabíjí port 8080. Když server běží, jen ho použije
-  (nespouští druhý server ani druhého workera). Pořadí: frontend → prohlížeč
-  → worker (worker se k API připojuje opakovaně sám).
-- **Spolehlivější `STOP`:** ukončení primárně podle titulku okna
-  (`taskkill /FI WINDOWTITLE`), funguje i na novějších Windows 11 bez WMIC.
-- **Sjednocené verze:** `APP_VERSION.txt`, `START.bat`, `STOP_PZ_MASK.bat`
-  i `update_manifest.json` nově hlásí jednotně v73.
+- **Oprava SAM2 (`GlobalHydra is not initialized`):** worker teď spolehlivě
+  inicializuje Hydru přímo na složku s configy. Bez toho spadl každý preview
+  i tracking a úloha se zasekla na „čeká na extrakci framů".
+- **Oprava instalace končící s CPU PyTorchem:** instalátory ověří CUDA a v
+  případě potřeby přeinstalují CUDA wheely; PowerShellový installer nově
+  instaluje torch 2.5.1 (SAM2 vyžaduje ≥2.5.1, dřív byl 2.3.1).
+- **Výběr výstupní složky:** pole „Output folder" na stránce nové úlohy —
+  předem zvolíš cestu (pamatuje se) a hotová maska se tam zkopíruje,
+  pojmenovaná podle úlohy.
+- **Turbo režim (rychlejší zpracování):** na NVIDIA GPU se zapnou bezpečná
+  zrychlení (cudnn.benchmark, TF32, matmul „high") a H.264 export jede přes
+  NVENC (GPU enkodér) s fallbackem na libx264; řízeno blokem `performance`
+  v `worker/config.json`.
+- **Celé rozhraní a hlášky v angličtině** (hlavní stránka, editor, RMBG,
+  update, worker i API).
+- **Rychlejší a stabilní start:** `START.bat` už nečeká 20 s na API a
+  nezabíjí port 8080; běžící server jen použije. Pořadí: frontend → prohlížeč
+  → worker.
+- **Spolehlivější `STOP`:** ukončení podle titulku okna (funguje i na novějších
+  Windows 11 bez WMIC).
 - **Funkční jádro z v70 zachováno** (SAM2 / MatAnyone 2 / RMBG, PHP API,
-  Python worker) — měnila se jen instalace, spouštění a balení.
+  Python worker).
 
 ## Řešení potíží
 

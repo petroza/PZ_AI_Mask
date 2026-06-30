@@ -1,93 +1,61 @@
-@echo off
-setlocal EnableExtensions
-cd /d "%~dp0.."
-title RMBG Luma Studio - FFmpeg installer CMD only
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PZ MASK — Update</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070a0d;--panel:#0e1419;--panel2:#121b22;--line:#20303a;--ink:#e9f1f7;--dim:#81909d;--acc:#2fe39a;--acc2:#28b6ff;--warn:#ffb454;--err:#ff5d5d}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(1000px 520px at 80% -10%,#142834 0%,transparent 58%),var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif}.wrap{max-width:980px;margin:0 auto;padding:34px 22px 70px}header{display:flex;align-items:center;gap:14px;margin-bottom:22px}.logo{width:42px;height:42px;border-radius:11px}h1{font-size:24px;margin:0;letter-spacing:-.4px}.sub{font:12px 'JetBrains Mono',monospace;color:var(--dim);margin-top:3px}.toplink{margin-left:auto;color:#cfe8f6;border:1px solid var(--line);background:#0a1015;border-radius:9px;padding:9px 12px;text-decoration:none;font:11px 'JetBrains Mono',monospace}.toplink:hover{border-color:#36515f;color:#fff}.card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.28);margin-bottom:16px}h2{margin:0 0 12px;font-size:18px}.drop{border:1px dashed #31505c;background:#091015;border-radius:14px;min-height:170px;display:grid;place-items:center;text-align:center;padding:24px;cursor:pointer;transition:.15s}.drop.over,.drop:hover{border-color:var(--acc);background:#0b1717}.drop b{font-size:18px}.drop span{display:block;color:var(--dim);font:12px 'JetBrains Mono',monospace;margin-top:8px}.btn{width:100%;border:0;border-radius:12px;background:linear-gradient(135deg,var(--acc),#20c98d);color:#04100c;font-weight:800;padding:15px 18px;cursor:pointer;margin-top:16px;box-shadow:0 15px 35px rgba(47,227,154,.18)}.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mono{font-family:'JetBrains Mono',monospace}.status{background:#071016;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow:auto;max-height:360px}.ok{color:var(--acc)}.err{color:var(--err)}.warn{color:var(--warn)}.small{font-size:12px;color:var(--dim);line-height:1.6}.pill{display:inline-flex;border:1px solid #1f5a3a;background:#0a2417;color:var(--acc);border-radius:99px;padding:4px 9px;font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.6px}.progress{height:7px;background:#0b1218;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin-top:12px;display:none}.progress i{display:block;height:100%;width:0;background:var(--acc)}@media(max-width:760px){.row{grid-template-columns:1fr}.toplink{margin-left:0}header{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="favicon.svg" alt="PZ MASK">
+    <div><h1>PZ MASK Update</h1><div class="sub">uploads a small ZIP · preserves runtime, models, jobs, tokens</div></div>
+    <a class="toplink" href="index.html">← Jobs</a>
+  </header>
 
-echo Installing/checking portable FFmpeg without PowerShell...
+  <div class="row">
+    <div class="card">
+      <h2>Install Update ZIP</h2>
+      <div class="drop" id="drop"><div><b>Drop update ZIP here</b><span id="fname">or click to choose a file</span></div><input id="file" type="file" accept=".zip" hidden></div>
+      <div class="progress" id="prog"><i></i></div>
+      <button class="btn" id="install" disabled>Install Update</button>
+      <p class="small">The update overwrites only the application files. It automatically skips the <b>runtime</b>, downloaded models, the database, uploads, results, worker tokens, and the local <span class="mono">worker/config.json</span>.</p>
+    </div>
+    <div class="card">
+      <h2>Current App</h2>
+      <div id="appinfo" class="status mono">loading…</div>
+    </div>
+  </div>
 
-set "ROOT=%cd%"
-set "FFDIR=%ROOT%\runtime\ffmpeg"
-set "FFEXE=%FFDIR%\bin\ffmpeg.exe"
-set "PYEXE=%ROOT%\.venv\Scripts\python.exe"
-
-if exist "%FFEXE%" (
-  echo FFmpeg already installed: %FFEXE%
-  exit /b 0
-)
-
-if not exist "%PYEXE%" (
-  echo ERROR: Python venv not found: %PYEXE%
-  echo Nejd??v mus? prob?hnout vytvo?en? .venv v install.bat.
-  exit /b 1
-)
-
-if not exist "%FFDIR%" mkdir "%FFDIR%" >nul 2>nul
-if not exist "%ROOT%\logs" mkdir "%ROOT%\logs" >nul 2>nul
-
-"%PYEXE%" -c "exec(r'''import os, sys, shutil, zipfile, urllib.request, pathlib, time
-root = pathlib.Path(os.environ.get('ROOT', os.getcwd()))
-ffdir = root / 'runtime' / 'ffmpeg'
-bindir = ffdir / 'bin'
-ffexe = bindir / 'ffmpeg.exe'
-url = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-zip_path = ffdir / 'ffmpeg-release-essentials.zip'
-tmp = ffdir / '_extract'
-ffdir.mkdir(parents=True, exist_ok=True)
-bindir.mkdir(parents=True, exist_ok=True)
-if ffexe.exists():
-    print('FFmpeg already installed:', ffexe)
-    sys.exit(0)
-print('Downloading FFmpeg:', url)
-try:
-    with urllib.request.urlopen(url, timeout=120) as r, open(zip_path, 'wb') as f:
-        total = int(r.headers.get('Content-Length') or 0)
-        done = 0
-        last = time.time()
-        while True:
-            chunk = r.read(1024 * 1024)
-            if not chunk:
-                break
-            f.write(chunk)
-            done += len(chunk)
-            now = time.time()
-            if now - last > 1.0:
-                if total:
-                    print(f'  {done/1024/1024:.1f} / {total/1024/1024:.1f} MB')
-                else:
-                    print(f'  {done/1024/1024:.1f} MB')
-                last = now
-except Exception as e:
-    print('ERROR: FFmpeg download failed:', repr(e))
-    print('Tip: st?hni ru?n? ffmpeg-release-essentials.zip z gyan.dev a dej ffmpeg.exe do runtime\\ffmpeg\\bin\\')
-    sys.exit(2)
-print('Extracting FFmpeg...')
-try:
-    if tmp.exists():
-        shutil.rmtree(tmp)
-    tmp.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(zip_path, 'r') as z:
-        z.extractall(tmp)
-    found_ffmpeg = next(tmp.rglob('ffmpeg.exe'), None)
-    found_ffprobe = next(tmp.rglob('ffprobe.exe'), None)
-    if not found_ffmpeg:
-        raise RuntimeError('ffmpeg.exe not found in downloaded archive')
-    shutil.copy2(found_ffmpeg, ffexe)
-    if found_ffprobe:
-        shutil.copy2(found_ffprobe, bindir / 'ffprobe.exe')
-finally:
-    if tmp.exists():
-        shutil.rmtree(tmp, ignore_errors=True)
-if not ffexe.exists():
-    print('ERROR: FFmpeg install failed, file missing:', ffexe)
-    sys.exit(3)
-print('FFmpeg installed:', ffexe)
-''')" 1>"%ROOT%\logs\install_ffmpeg_cmd.log" 2>&1
-set "ERR=%ERRORLEVEL%"
-type "%ROOT%\logs\install_ffmpeg_cmd.log"
-if not "%ERR%"=="0" (
-  echo.
-  echo FFmpeg install failed. Log: logs\install_ffmpeg_cmd.log
-  exit /b %ERR%
-)
-
-exit /b 0
+  <div class="card">
+    <h2>Update log</h2>
+    <div id="log" class="status mono">waiting for update ZIP…</div>
+  </div>
+</div>
+<script>
+const API='api/index.php?action=';
+const $=s=>document.querySelector(s);
+let chosen=null;
+function log(msg, cls=''){const el=$('#log');el.innerHTML=(cls?`<span class="${cls}">`:'')+msg+(cls?'</span>':'');}
+function esc(s){return(s+'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+async function status(){try{const d=await(await fetch(API+'app/status')).json();$('#appinfo').innerHTML=`<span class="pill">${esc(d.version||'unknown')}</span>\n\nApp root:\n${esc(d.app_root||'')}\n\nBackups:\n${esc(d.backups_dir||'')}\n\nLast update:\n${d.last_update?esc(JSON.stringify(d.last_update,null,2)):'none'}`;}catch(e){$('#appinfo').innerHTML='<span class="err">API unavailable: '+esc(e.message||e)+'</span>';}}
+status();
+const drop=$('#drop'), file=$('#file');
+drop.onclick=()=>file.click();
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)setFile(f)});
+file.onchange=()=>{if(file.files[0])setFile(file.files[0])};
+function setFile(f){chosen=f;$('#fname').textContent=f.name+' · '+(f.size/1048576).toFixed(2)+' MB';$('#install').disabled=false;log('ready: '+f.name)}
+$('#install').onclick=async()=>{if(!chosen)return;if(!confirm('Install update? The app will create a backup and preserve runtime/models.'))return;$('#install').disabled=true;const fd=new FormData();fd.append('update_zip',chosen,chosen.name);const bar=$('#prog');bar.style.display='block';bar.querySelector('i').style.width='0%';log('uploading update…','warn');try{const d=await new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST',API+'update/install');xhr.upload.onprogress=e=>{if(e.lengthComputable)bar.querySelector('i').style.width=(e.loaded/e.total*100)+'%'};xhr.onload=()=>{try{const j=JSON.parse(xhr.responseText);if(xhr.status>=200&&xhr.status<300&&j.ok)resolve(j);else reject(new Error(j.error||xhr.responseText||('HTTP '+xhr.status)))}catch(_){reject(new Error(xhr.responseText||'invalid response'))}};xhr.onerror=()=>reject(new Error('network error'));xhr.send(fd)});log('DONE\n\n'+esc(JSON.stringify(d,null,2))+'\n\nA worker restart was requested. If an older worker is running, close/open START.bat manually. Future versions will restart on their own.','ok');status();}catch(e){log('ERROR\n'+esc(e.message||e),'err');$('#install').disabled=false;}};
+</script>
+</body>
+</html>

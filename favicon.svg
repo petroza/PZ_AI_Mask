@@ -1,54 +1,21 @@
-@echo off
-REM ====================================================================
-REM  Mask Studio - GPU worker
-REM  Survives paths with spaces and parentheses.
-REM ====================================================================
-setlocal EnableExtensions DisableDelayedExpansion
-cd /d "%~dp0.."
-
-set "HERE=%CD%"
-
-set "PYEXE=%HERE%\runtime\miniconda\envs\maskstudio\python.exe"
-if exist "%HERE%\worker\python_path.txt" set /p PYEXE=<"%HERE%\worker\python_path.txt"
-
-if not exist "%PYEXE%" goto noenv
-if not exist "%HERE%\worker\config.json" goto nocfg
-
-set "PYTHONUTF8=1"
-set "HF_HOME=%HERE%\runtime\hf_cache"
-if exist "%HERE%\worker\hf_token.txt" (
-  set /p HF_TOKEN=<"%HERE%\worker\hf_token.txt"
-  set "HUGGINGFACE_HUB_TOKEN=%HF_TOKEN%"
-  echo  [OK] Hugging Face token loaded from worker\hf_token.txt
-)
-
-echo  Checking PyTorch/CUDA...
-"%PYEXE%" "%HERE%\worker\device_check.py"
-if errorlevel 1 (
-  echo.
-  echo  [!] CUDA is not ready. For RTX fix it with: REPAIR_CUDA_TORCH.bat
-  echo      Worker will temporarily use CPU fallback instead of crashing.
-  echo.
-)
-
-echo  Starting worker (Ctrl+C to stop)...
-echo.
-REM IMPORTANT: do NOT run from .\worker because .\worker\sam2 may shadow
-REM the installed SAM2 package and SAM2 then refuses to start.
-cd /d "%HERE%"
-if not exist "%HERE%\runtime\_run" mkdir "%HERE%\runtime\_run" >nul 2>nul
-"%PYEXE%" "%HERE%\worker\run.py" --config "%HERE%\worker\config.json"
-echo.
-echo  Worker stopped.
-pause
-goto :eof
-
-:noenv
-echo  [ERROR] Environment not installed. Run INSTALL.bat first.
-pause
-goto :eof
-
-:nocfg
-echo  [ERROR] Missing worker\config.json. Run INSTALL.bat first.
-pause
-goto :eof
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="PZ MASK">
+  <defs>
+    <linearGradient id="pzg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2fe39a"/><stop offset="1" stop-color="#34c3ff"/>
+    </linearGradient>
+    <pattern id="pzchk" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+      <rect width="7" height="7" fill="#0c241b"/>
+      <rect width="3.5" height="3.5" fill="#13402f"/>
+      <rect x="3.5" y="3.5" width="3.5" height="3.5" fill="#13402f"/>
+    </pattern>
+    <clipPath id="pzc"><rect x="3" y="3" width="42" height="42" rx="12"/></clipPath>
+  </defs>
+  <rect x="3" y="3" width="42" height="42" rx="12" fill="url(#pzg)"/>
+  <g clip-path="url(#pzc)">
+    <rect x="24" y="2" width="22" height="44" fill="url(#pzchk)"/>
+    <circle cx="24" cy="24" r="11.5" fill="#05130d"/>
+    <path d="M24 12.5a11.5 11.5 0 0 1 0 23z" fill="#0c241b"/>
+    <path d="M24 12.5a11.5 11.5 0 0 0 0 23" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/>
+  </g>
+  <rect x="3.6" y="3.6" width="40.8" height="40.8" rx="11.4" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.1"/>
+</svg>

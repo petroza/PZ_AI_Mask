@@ -1,16 +1,66 @@
-PZ MASK STUDIO — jak spustit
-============================
+<?php
+/**
+ * Router pro PHP built-in server (jen lokalni test).
+ * Mapuje:
+ *    /                -> public/index.html
+ *    /editor.html     -> public/editor.html
+ *    /api/...         -> api/index.php (s predanim query)
+ *    /storage/...     -> staticke soubory ze storage/
+ *
+ * Spousti se pres START.bat (pripadne nastroje\run_frontend.bat). Na Forpsi se NEPOUZIVA
+ * (tam je docroot rovnou public/ a .htaccess resi zbytek).
+ */
 
-  START.bat           Spustí všechno (server + worker + prohlížeč).
-  STOP_PZ_MASK.bat    Zastaví běžící server a worker.
-  install.bat         První instalace (stáhne Python, modely, PHP...).
-  UNINSTALL.bat       Kompletní odinstalace (smaže celou složku).
+$root = __DIR__;
+$uri  = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri  = rawurldecode($uri);
 
-  nastroje\           Opravné a servisní skripty — běžně je nepotřebuješ.
-                      Popis každého skriptu: nastroje\CTI_ME.txt
+// API -> api/index.php
+if (preg_match('#^/api/index\.php#', $uri) || strpos($uri, '/api/') === 0) {
+    // nechame index.php zpracovat (action je v $_GET)
+    chdir($root . '/api');
+    require $root . '/api/index.php';
+    return true;
+}
 
-Typický postup:
-  1. install.bat   (jen jednou; případně nastroje\INSTALL_NO_POWERSHELL.bat,
-                    když Windows blokuje PowerShell)
-  2. START.bat
-  3. V prohlížeči se otevře http://127.0.0.1:8080
+// staticke soubory ze storage (nahledy framu, vysledky)
+if (strpos($uri, '/storage/') === 0) {
+    $f = $root . $uri;
+    if (is_file($f)) {
+        $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+        $mt = ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png',
+               'zip'=>'application/zip','webm'=>'video/webm','mp4'=>'video/mp4'];
+        if (isset($mt[$ext])) header('Content-Type: ' . $mt[$ext]);
+        readfile($f);
+        return true;
+    }
+    http_response_code(404);
+    return true;
+}
+
+// koren -> index.html
+if ($uri === '/' || $uri === '') {
+    readfile($root . '/public/index.html');
+    return true;
+}
+
+// ostatni -> hledej v public/
+$pub = $root . '/public' . $uri;
+if (is_file($pub)) {
+    $ext = strtolower(pathinfo($pub, PATHINFO_EXTENSION));
+    $mt = ['html'=>'text/html','js'=>'text/javascript','css'=>'text/css',
+           'png'=>'image/png','jpg'=>'image/jpeg','svg'=>'image/svg+xml',
+           'json'=>'application/json','ico'=>'image/x-icon'];
+    if (isset($mt[$ext])) header('Content-Type: ' . $mt[$ext]);
+    readfile($pub);
+    return true;
+}
+
+// fallback do rootu (kdyby neco)
+if (is_file($root . $uri)) {
+    return false; // nechame PHP server obslouzit sam
+}
+
+http_response_code(404);
+echo "404";
+return true;

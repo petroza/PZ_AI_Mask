@@ -211,27 +211,28 @@ if (-not (Test-Native { & $Py -m pip --version })) {
     Ok "pip pripraven"
 }
 
-Info "instaluji PyTorch 2.3.1 + CUDA 12.1 (Ada / RTX 4070 Ti) ..."
+Info "instaluji PyTorch 2.5.1 + CUDA 12.1 (Ada / RTX 4070 Ti, kompatibilni se SAM2) ..."
 
 $env:PYTHONUNBUFFERED = "1"
 $PIPQ = @("--no-warn-script-location", "--progress-bar", "off")
 $PipProgress = Join-Path $Root "tools\pip_progress.py"
 Invoke-Native { & $Py $PipProgress install --upgrade pip @PIPQ } | Out-Null
 
-# torch je ~2.4 GB. Stahneme wheel SAMI (nas Download ukazuje MB/%), pak
+# torch je ~2.5 GB. Stahneme wheel SAMI (nas Download ukazuje MB/%), pak
 # nainstalujeme z lokalniho souboru. Pip pres PowerShell jinak progress neukaze
 # a vypada to zaseknute (znamy jev - viz krita-ai / comfyui issues).
+# POZOR: SAM2 vyzaduje torch>=2.5.1 / torchvision>=0.20.1 (proto NE 2.3.1).
 $whlDir = Join-Path $TmpDir "wheels"
 New-Item -ItemType Directory -Force -Path $whlDir | Out-Null
 $cu = "https://download.pytorch.org/whl/cu121"
-$torchWhl = Join-Path $whlDir "torch-2.3.1+cu121-cp310-cp310-win_amd64.whl"
-$tvWhl    = Join-Path $whlDir "torchvision-0.18.1+cu121-cp310-cp310-win_amd64.whl"
+$torchWhl = Join-Path $whlDir "torch-2.5.1+cu121-cp310-cp310-win_amd64.whl"
+$tvWhl    = Join-Path $whlDir "torchvision-0.20.1+cu121-cp310-cp310-win_amd64.whl"
 $haveWhl = $false
 try {
-    Info "stahuji torch CUDA wheel (~2.4 GB):"
-    Download "$cu/torch-2.3.1%2Bcu121-cp310-cp310-win_amd64.whl" $torchWhl
+    Info "stahuji torch CUDA wheel (~2.5 GB):"
+    Download "$cu/torch-2.5.1%2Bcu121-cp310-cp310-win_amd64.whl" $torchWhl
     Info "stahuji torchvision CUDA wheel:"
-    Download "$cu/torchvision-0.18.1%2Bcu121-cp310-cp310-win_amd64.whl" $tvWhl
+    Download "$cu/torchvision-0.20.1%2Bcu121-cp310-cp310-win_amd64.whl" $tvWhl
     $haveWhl = $true
 } catch {
     Warn "Prime stazeni CUDA wheelu selhalo, zkousim klasicky pip ..."
@@ -242,7 +243,7 @@ if ($haveWhl) {
     Info "instaluji stazene CUDA wheely ..."
     $tok = Invoke-Native { & $Py $PipProgress install $torchWhl $tvWhl @PIPQ }
 } else {
-    $tok = Invoke-Native { & $Py $PipProgress install torch==2.3.1+cu121 torchvision==0.18.1+cu121 --index-url $cu @PIPQ }
+    $tok = Invoke-Native { & $Py $PipProgress install torch==2.5.1+cu121 torchvision==0.20.1+cu121 --index-url $cu @PIPQ }
 }
 if (-not $tok) { Die "Instalace PyTorche CUDA selhala (sit?). Spust install.bat znovu." }
 
@@ -264,6 +265,14 @@ if (-not (Invoke-Native { & $Py $PipProgress install -r (Join-Path $Worker "requ
     Die "Instalace zavislosti workeru selhala. Spust install.bat znovu."
 }
 Ok "zavislosti workeru hotove"
+
+# Pojistka: nektera zavislost umi pretlacit CUDA torch za CPU build. Kdyz mame
+# NVIDIA GPU a torch uz nevidi CUDA, doinstaluj zpet CUDA wheely.
+if ($hasNvidia -and -not (Test-Native { & $Py -c "import torch,sys; sys.exit(0 if (getattr(torch.version,'cuda',None) and torch.cuda.is_available()) else 1)" })) {
+    Warn "Nektera zavislost prepsala PyTorch na CPU build. Vracim CUDA wheely ..."
+    Invoke-Native { & $Py -m pip uninstall -y torch torchvision torchaudio } | Out-Null
+    Invoke-Native { & $Py $PipProgress install torch==2.5.1+cu121 torchvision==0.20.1+cu121 --index-url $cu @PIPQ } | Out-Null
+}
 
 # =====================================================================
 Section "4/7  SAM 2.1 a MatAnyone 2"

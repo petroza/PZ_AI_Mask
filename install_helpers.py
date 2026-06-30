@@ -1,18 +1,196 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PZ MASK — RMBG Luma</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#071018;--panel:#0d1b26;--line:#1c3446;--txt:#eef7ff;--muted:#8fa5b6;--acc:#22e3a4;--bad:#ff647c;--warn:#ffb454}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#112436,#071018 55%);font-family:'Space Grotesk',Segoe UI,Arial,sans-serif;color:var(--txt);min-height:100vh}.wrap{max-width:820px;margin:0 auto;padding:28px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}a{color:#7fd7ff;text-decoration:none}.card{background:rgba(13,27,38,.9);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 20px 60px #0008}h1{font-size:28px;margin:0 0 6px}.sub{color:var(--muted);font-family:'JetBrains Mono';font-size:12px}.pill{display:inline-block;border:1px solid #2a5168;border-radius:999px;padding:6px 10px;color:#a9c0d0;font-size:12px;margin:4px 6px 0 0}.bar{height:14px;background:#06111a;border:1px solid #1e3a4c;border-radius:999px;overflow:hidden;margin:18px 0}.fill{height:100%;width:0;background:linear-gradient(90deg,#20d193,#22e3a4);transition:width .25s}.status{white-space:pre-wrap;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;color:#d9f2ff;background:#06111a;border-radius:12px;padding:14px;min-height:130px}.btn{display:none;text-align:center;margin-top:16px;text-decoration:none;border-radius:12px;background:var(--acc);color:#06120f;font-weight:900;padding:14px}.btn.secondary{background:#112f44;color:#d8f4ff;border:1px solid #24536c}.err{color:var(--bad)}.warn{color:var(--warn)}.rbrand{display:flex;align-items:center;gap:10px}.rbrand img{width:30px;height:30px;border-radius:9px;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 6px 18px rgba(52,195,255,.18)}.rbrand .wm{font-weight:800;font-size:15px;letter-spacing:.3px;line-height:1.05}.rbrand .wm b{color:var(--acc)}.rbrand .wm small{display:block;font-family:'JetBrains Mono';font-size:8.5px;color:var(--muted);letter-spacing:1.4px;font-weight:600;margin-top:2px}.top .right{display:flex;align-items:center;gap:14px}.top a{font-size:12.5px}.downloads{display:grid;grid-template-columns:1fr;gap:10px}.downloads .btn{margin-top:16px}@media(min-width:640px){.downloads{grid-template-columns:1fr 1fr}}
-</style>
-</head>
-<body><div class="wrap"><div class="top"><div class="rbrand"><img src="favicon.svg" alt="PZ MASK"><div class="wm"><b>PZ</b> MASK<small>RMBG LUMA</small></div></div><div class="right"><a href="index.html">← back to jobs</a><span class="sub" id="clock"></span></div></div><div class="card"><h1 id="title">RMBG Luma</h1><div class="sub" id="meta">Načítám…</div><div style="margin-top:12px"><span class="pill">RMBG</span><span class="pill">H.264 MP4</span><span class="pill">luma matte</span></div><div class="bar"><div class="fill" id="fill"></div></div><div class="status" id="status">Čekám na API…</div><div class="downloads"><a class="btn" id="download" href="#">Stáhnout H.264 MP4</a><a class="btn secondary" id="downloadpng" href="#">Stáhnout PNG sekvenci ZIP</a></div></div></div>
-<script>
-const API='api/index.php?action=';const token=new URLSearchParams(location.search).get('token');const $=s=>document.querySelector(s);if(!token)location.href='index.html';function esc(s){return(s+'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString()}setInterval(tick,1000);tick();
-function setDownloads(j){const done=j.status==='done', r=j.results||{};$('#download').style.display=(done&&(r.mp4||(!r.files&&!r.png_zip)))?'block':'none';$('#download').href=API+'result&token='+encodeURIComponent(token)+'&f=mp4';$('#downloadpng').style.display=(done&&r.png_zip)?'block':'none';$('#downloadpng').href=API+'result&token='+encodeURIComponent(token)+'&f=png_sequence';}
-async function poll(){try{const d=await(await fetch(API+'job&token='+encodeURIComponent(token)+'&_='+Date.now())).json();if(!d.ok){$('#status').innerHTML='<span class="err">Job nenalezen.</span>';return}const j=d.job;__rs=j.status;$('#title').textContent=j.name||'RMBG Luma';$('#meta').textContent=`${j.status} · ${j.width||'?'}×${j.height||'?'} · ${j.frame_count||0} frames · model ${j.rmbg_model_id||'RMBG'}`;$('#fill').style.width=Math.round((j.progress||0)*100)+'%';let text=`Status: ${j.status}\nProgress: ${Math.round((j.progress||0)*100)}%\n${j.stage_msg||''}`;if(j.error_msg)text+='\n\nCHYBA: '+j.error_msg;if(j.status==='done'&&j.results&&j.results.files&&j.results.files.length===0)text+='\n\nHotovo, ale API nenašlo výsledný soubor.';$('#status').textContent=text;setDownloads(j);if(j.status==='error')$('#status').classList.add('err');else $('#status').classList.remove('err');}catch(e){$('#status').innerHTML='<span class="err">API unavailable: '+esc(e.message)+'</span>'}}
-let __rs=null,__rt=null;function rmbgDelay(){if(document.hidden)return 8000;if(__rs==='done'||__rs==='error')return 5000;return 1200;}function rmbgLoop(){if(__rt)clearTimeout(__rt);poll().finally(()=>{__rt=setTimeout(rmbgLoop,rmbgDelay());});}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)rmbgLoop();});rmbgLoop();
-</script></body></html>
+# Mask Studio helper for INSTALL_NO_POWERSHELL.bat
+# Python stdlib only. No PowerShell required.
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sys
+import time
+import urllib.request
+import zipfile
+from pathlib import Path
+
+
+def log(msg: str) -> None:
+    print(msg, flush=True)
+
+
+def download(url: str, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists() and dest.stat().st_size > 0:
+        log(f"  [OK] already downloaded: {dest.name}")
+        return
+    tmp = dest.with_suffix(dest.suffix + ".part")
+    if tmp.exists():
+        tmp.unlink()
+    log(f"  Downloading: {url}")
+    req = urllib.request.Request(url, headers={"User-Agent": "MaskStudioInstaller/1.0"})
+    with urllib.request.urlopen(req, timeout=60) as resp, tmp.open("wb") as f:
+        total = int(resp.headers.get("content-length") or 0)
+        done = 0
+        last = 0.0
+        while True:
+            chunk = resp.read(1024 * 1024)
+            if not chunk:
+                break
+            f.write(chunk)
+            done += len(chunk)
+            now = time.time()
+            if now - last > 0.5:
+                if total:
+                    pct = done * 100 / total
+                    print(f"\r    {pct:5.1f}%  {done/1024/1024:.1f} / {total/1024/1024:.1f} MB", end="", flush=True)
+                else:
+                    print(f"\r    {done/1024/1024:.1f} MB", end="", flush=True)
+                last = now
+    print(flush=True)
+    tmp.replace(dest)
+
+
+def github_repo(owner: str, repo: str, branch: str, dest_dir: str, tmp_dir: str) -> int:
+    dest = Path(dest_dir)
+    if (dest / "setup.py").exists() or (dest / "pyproject.toml").exists():
+        log(f"  [OK] {repo} already present.")
+        return 0
+    tmp = Path(tmp_dir)
+    zip_path = tmp / f"{repo}.zip"
+    url = f"https://codeload.github.com/{owner}/{repo}/zip/refs/heads/{branch}"
+    try:
+        download(url, zip_path)
+        extract_tmp = tmp / f"{repo}-extract"
+        if extract_tmp.exists():
+            shutil.rmtree(extract_tmp, ignore_errors=True)
+        extract_tmp.mkdir(parents=True, exist_ok=True)
+        log(f"  Extracting {repo}...")
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(extract_tmp)
+        dirs = [p for p in extract_tmp.iterdir() if p.is_dir()]
+        if not dirs:
+            raise RuntimeError("empty GitHub archive")
+        if dest.exists():
+            shutil.rmtree(dest, ignore_errors=True)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(dirs[0]), str(dest))
+        log(f"  [OK] {repo} ready: {dest}")
+        return 0
+    except Exception as exc:
+        log(f"  [ERROR] {repo}: {exc}")
+        return 1
+
+
+def install_php(php_dir: str, tmp_dir: str) -> int:
+    php = Path(php_dir)
+    tmp = Path(tmp_dir)
+    exe = php / "php.exe"
+    urls = [
+        os.environ.get("MS_PHP_URL") or "https://windows.php.net/downloads/releases/php-8.3.6-nts-Win32-vs16-x64.zip",
+        "https://windows.php.net/downloads/releases/archives/php-8.3.6-nts-Win32-vs16-x64.zip",
+    ]
+    if not exe.exists():
+        zip_path = tmp / "php.zip"
+        ok = False
+        for url in urls:
+            try:
+                download(url, zip_path)
+                ok = True
+                break
+            except Exception as exc:
+                log(f"  [!] PHP download failed: {exc}")
+        if not ok:
+            return 1
+        php.mkdir(parents=True, exist_ok=True)
+        log("  Extracting PHP...")
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(php)
+    if not exe.exists():
+        log("  [ERROR] php.exe not found after extraction")
+        return 1
+
+    ini = php / "php.ini"
+    ini_dev = php / "php.ini-development"
+    if not ini.exists() and ini_dev.exists():
+        shutil.copyfile(ini_dev, ini)
+    if not ini.exists():
+        ini.write_text("", encoding="ascii")
+
+    text = ini.read_text(encoding="utf-8", errors="ignore").splitlines()
+    cleaned: list[str] = []
+    skip = False
+    for line in text:
+        if "Mask Studio config" in line:
+            skip = not skip
+            continue
+        if not skip:
+            cleaned.append(line)
+    ext_dir = str((php / "ext").resolve()).replace("\\", "/")
+    block = [
+        "; ===== Mask Studio config (appended by installer) =====",
+        f'extension_dir = "{ext_dir}"',
+        "extension=sqlite3",
+        "extension=pdo_sqlite",
+        "extension=zip",
+        "extension=gd",
+        "extension=mbstring",
+        "extension=fileinfo",
+        "extension=openssl",
+        "upload_max_filesize = 4096M",
+        "post_max_size = 4096M",
+        "max_execution_time = 600",
+        "max_input_time = 600",
+        "memory_limit = 1024M",
+        "; ===== Mask Studio config =====",
+    ]
+    ini.write_text("\n".join(cleaned + block) + "\n", encoding="ascii", errors="ignore")
+    log(f"  [OK] PHP ready: {exe}")
+    return 0
+
+
+def write_config(worker_dir: str, py_path: str, has_nvidia: str) -> int:
+    worker = Path(worker_dir)
+    cfg_path = worker / "config.json"
+    if cfg_path.exists():
+        log("  [OK] config.json already exists - normalizing device=auto.")
+        try:
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8-sig"))
+            cfg["device"] = "auto"
+            cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception as exc:
+            log(f"  [!] config normalization skipped: {exc}")
+    else:
+        example = worker / "config.example.json"
+        if example.exists():
+            try:
+                cfg = json.loads(example.read_text(encoding="utf-8-sig"))
+            except Exception:
+                cfg = {}
+        else:
+            cfg = {}
+        cfg.setdefault("api_base", "http://127.0.0.1:8080/api/index.php?action=")
+        cfg.setdefault("worker_token", "maskstudio-local-token")
+        cfg["worker_id"] = f"{os.environ.get('COMPUTERNAME', 'MASKSTUDIO')}-rtx"
+        cfg["device"] = "auto"
+        cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+        log("  [OK] config.json created.")
+    (worker / "python_path.txt").write_text(py_path, encoding="ascii", errors="ignore")
+    log("  [OK] python_path.txt written.")
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 2:
+        log("Usage: install_helpers.py <action> ...")
+        return 2
+    action = argv[1]
+    if action == "github_repo" and len(argv) == 7:
+        return github_repo(argv[2], argv[3], argv[4], argv[5], argv[6])
+    if action == "install_php" and len(argv) == 4:
+        return install_php(argv[2], argv[3])
+    if action == "write_config" and len(argv) == 5:
+        return write_config(argv[2], argv[3], argv[4])
+    log(f"Bad arguments: {argv}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))
